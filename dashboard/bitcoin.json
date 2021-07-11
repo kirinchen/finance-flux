@@ -15,7 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 2,
+  "id": 5,
   "links": [],
   "panels": [
     {
@@ -708,12 +708,12 @@
     "list": []
   },
   "time": {
-    "from": "now-7d",
+    "from": "now-5y",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "Bitcoin",
   "uid": "FAhQaYlGz",
-  "version": 18
+  "version": 1
 }
