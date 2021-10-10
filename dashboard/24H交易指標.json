@@ -15,8 +15,8 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 3,
-  "iteration": 1626003568131,
+  "id": 4,
+  "iteration": 1633879702335,
   "links": [],
   "panels": [
     {
@@ -141,7 +141,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"order-measurement\" and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"price\" or r._field == \"stopPrice\" )\r\n  )\r\n  |>map(fn: (r) => ({ r with alias: \"order_\"+r._field+\"_\"+r.side }))   ",
+          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"order-measurement\" and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"price\" or r._field == \"stopPrice\" )\r\n  )\r\n  |>map(fn: (r) => ({ r with alias: \"order_\"+r._field+\"_\"+r.positionSide }))   ",
           "refId": "B",
           "resultFormat": "time_series",
           "select": [
@@ -557,7 +557,7 @@
       {
         "allValue": null,
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "ETH",
           "value": "ETH"
         },
@@ -637,12 +637,12 @@
     ]
   },
   "time": {
-    "from": "now-5d",
+    "from": "now-24h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "24H交易指標",
   "uid": "H019QrRnk",
-  "version": 25
+  "version": 3
 }
