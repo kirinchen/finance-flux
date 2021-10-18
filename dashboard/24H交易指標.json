@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 4,
-  "iteration": 1633879702335,
+  "iteration": 1634571389836,
   "links": [],
   "panels": [
     {
@@ -64,22 +64,22 @@
       "renderer": "flot",
       "seriesOverrides": [
         {
-          "alias": "order_price_BUY",
+          "alias": "order_price_LONG",
           "lines": false,
           "points": true
         },
         {
-          "alias": "order_stopPrice_BUY",
+          "alias": "order_stopPrice_LONG",
           "lines": false,
           "points": true
         },
         {
-          "alias": "order_price_SELL",
+          "alias": "order_price_SHORT",
           "lines": false,
           "points": true
         },
         {
-          "alias": "order_stopPrice_SELL",
+          "alias": "order_stopPrice_SHORT",
           "lines": false,
           "points": true
         }
@@ -557,7 +557,7 @@
       {
         "allValue": null,
         "current": {
-          "selected": false,
+          "selected": true,
           "text": "ETH",
           "value": "ETH"
         },
@@ -644,5 +644,5 @@
   "timezone": "",
   "title": "24H交易指標",
   "uid": "H019QrRnk",
-  "version": 3
+  "version": 4
 }
