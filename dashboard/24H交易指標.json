@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 4,
-  "iteration": 1636728654626,
+  "iteration": 1638497367712,
   "links": [],
   "panels": [
     {
@@ -64,22 +64,22 @@
       "renderer": "flot",
       "seriesOverrides": [
         {
-          "alias": "order_price_LONG",
+          "alias": "order_price_LONG_LIMIT",
           "lines": false,
           "points": true
         },
         {
-          "alias": "order_stopPrice_LONG",
+          "alias": "order_stopPrice_LONG_LIMIT",
           "lines": false,
           "points": true
         },
         {
-          "alias": "order_price_SHORT",
+          "alias": "order_price_SHORT_LIMIT",
           "lines": false,
           "points": true
         },
         {
-          "alias": "order_stopPrice_SHORT",
+          "alias": "order_stopPrice_SHORT_LIMIT",
           "lines": false,
           "points": true
         }
@@ -141,7 +141,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"order-measurement\" and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"price\" or r._field == \"stopPrice\" )\r\n  )\r\n  |>map(fn: (r) => ({ r with alias: \"order_\"+r._field+\"_\"+r.positionSide }))   ",
+          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"order-measurement\" and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"price\" or r._field == \"stopPrice\" )\r\n  )\r\n  |>map(fn: (r) => ({ r with alias: \"order_\"+r._field+\"_\"+r.positionSide+\"_\"+r.strategy }))   ",
           "refId": "B",
           "resultFormat": "time_series",
           "select": [
@@ -619,9 +619,9 @@
       {
         "allValue": null,
         "current": {
-          "selected": false,
-          "text": "60m",
-          "value": "60m"
+          "selected": true,
+          "text": "180m",
+          "value": "180m"
         },
         "hide": 1,
         "includeAll": false,
@@ -645,7 +645,7 @@
             "value": "30m"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "60m",
             "value": "60m"
           },
@@ -655,7 +655,7 @@
             "value": "120m"
           },
           {
-            "selected": false,
+            "selected": true,
             "text": "180m",
             "value": "180m"
           },
@@ -680,5 +680,5 @@
   "timezone": "",
   "title": "24H交易指標",
   "uid": "H019QrRnk",
-  "version": 5
+  "version": 7
 }
