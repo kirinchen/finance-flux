@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 4,
-  "iteration": 1638612955792,
+  "iteration": 1638796760306,
   "links": [],
   "panels": [
     {
@@ -303,6 +303,11 @@
           "alias": "macd",
           "bars": true,
           "lines": false
+        },
+        {
+          "alias": "macdRT",
+          "bars": true,
+          "lines": false
         }
       ],
       "spaceLength": 10,
@@ -326,7 +331,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r._field == \"price\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> map(fn: (r) => ({ r with cp: r._value   }))\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |> map(fn: (r) => ({ r with _value: (r.cp-r._value)/r._value   }))\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias: \"Bias\" }))   ",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r._field == \"price\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> map(fn: (r) => ({ r with cp: r._value   }))\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |> map(fn: (r) => ({ r with _value: (r.cp-r._value)   }))\r\n  |> movingAverage(n: 9 )\r\n  |>map(fn: (r) => ({ r with alias: \"DIF\" }))   ",
           "refId": "A",
           "resultFormat": "time_series",
           "select": [
@@ -362,7 +367,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r._field == \"price\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> map(fn: (r) => ({ r with cp: r._value   }))\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))*2/5 )\r\n  |> map(fn: (r) => ({ r with _value: (r.cp-r._value)/r._value   }))\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))*2/5 )\r\n  |>map(fn: (r) => ({ r with alias: \"Bias Tx2\" }))   ",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r._field == \"price\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> map(fn: (r) => ({ r with cp: r._value   }))\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))*2/5 )\r\n  |> map(fn: (r) => ({ r with _value: (r.cp-r._value)   }))\r\n  |> movingAverage(n: 9 )\r\n  |>map(fn: (r) => ({ r with alias: \"DIFx2\" }))   ",
           "refId": "C",
           "resultFormat": "time_series",
           "select": [
@@ -398,7 +403,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r._field == \"price\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> map(fn: (r) => ({ r with cp: r._value   }))\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |> map(fn: (r) => ({ r with _value: (r.cp-r._value)/r._value   }))\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |> map(fn: (r) => ({ r with _fast: r._value   }))\r\n  |> map(fn: (r) => ({ r with _value: r.cp   }))\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))*2/5 )\r\n  |> map(fn: (r) => ({ r with _value: (r.cp-r._value)/r._value   }))\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))*2/5 )\r\n  |> map(fn: (r) => ({ r with _value: r._fast - r._value   }))\r\n  |>map(fn: (r) => ({ r with alias: \"macd\" }))   ",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r._field == \"price\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> map(fn: (r) => ({ r with cp: r._value   }))\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |> map(fn: (r) => ({ r with _fast: r.cp -r._value    }))\r\n  |> map(fn: (r) => ({ r with _value: r.cp   }))\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))*2/5 )\r\n  |> map(fn: (r) => ({ r with _slow: r.cp -r._value   }))\r\n  |> map(fn: (r) => ({ r with _value: r._fast -r._slow   }))\r\n  |> movingAverage(n: 9 )  \r\n  |>map(fn: (r) => ({ r with alias: \"macd\" }))   ",
           "refId": "B",
           "resultFormat": "time_series",
           "select": [
@@ -814,9 +819,9 @@
       {
         "allValue": null,
         "current": {
-          "selected": true,
-          "text": "BTC",
-          "value": "BTC"
+          "selected": false,
+          "text": "ETH",
+          "value": "ETH"
         },
         "datasource": "InfluxDB",
         "definition": "",
@@ -841,8 +846,8 @@
         "allValue": null,
         "current": {
           "selected": true,
-          "text": "30m",
-          "value": "30m"
+          "text": "60m",
+          "value": "60m"
         },
         "hide": 1,
         "includeAll": false,
@@ -861,12 +866,12 @@
             "value": "15m"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "30m",
             "value": "30m"
           },
           {
-            "selected": false,
+            "selected": true,
             "text": "60m",
             "value": "60m"
           },
@@ -901,5 +906,5 @@
   "timezone": "",
   "title": "24H交易指標",
   "uid": "H019QrRnk",
-  "version": 10
+  "version": 15
 }
