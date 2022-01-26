@@ -15,8 +15,8 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 12,
-  "iteration": 1642822586396,
+  "id": 13,
+  "iteration": 1643211805196,
   "links": [],
   "panels": [
     {
@@ -84,7 +84,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "movingStddev = (every, period, column=\"_value\", tables=<-) =>\r\n  tables\r\n    |> window(every: every, period: period)\r\n    |> stddev(column:column)\r\n    |> duplicate(column: \"_stop\", as: \"_time\")\r\n    |> window(every: inf)\r\n\r\n\r\nser = from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"realtime\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"quoteAssetVolume\")\r\n  |> filter(fn: (r) => r[\"symbol\"] == \"BTC\")\r\n\r\nstds= ser\r\n|> movingStddev(every:5m, period: ${period})\r\n\r\navgs= ser\r\n|> timedMovingAverage(every:5m, period: ${period2})\r\n\r\njoin(tables: {stds: stds, avgs: avgs}, on: [\"_time\"])\r\n    |> map(fn: (r) => ({ r with _value: r._value_stds/r._value_avgs    }))\r\n    |>map(fn: (r) => ({ r with alias: \"stddev_rate\" }))   ",
+          "query": "movingStddev = (every, period, column=\"_value\", tables=<-) =>\r\n  tables\r\n    |> window(every: every, period: period)\r\n    |> stddev(column:column)\r\n    |> duplicate(column: \"_stop\", as: \"_time\")\r\n    |> window(every: inf)\r\n\r\n\r\nser = from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"realtime\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"quoteAssetVolume\")\r\n  |> filter(fn: (r) => r[\"symbol\"] == \"BTC\")\r\n\r\nstds= ser\r\n|> movingStddev(every:5m, period: ${period})\r\n\r\navgs= ser\r\n|> timedMovingAverage(every:5m, period: ${period2})\r\n\r\njoin(tables: {stds: stds, avgs: avgs}, on: [\"_time\"])\r\n    |> map(fn: (r) => ({ r with _value: r._value_stds/r._value_avgs    }))\r\n    |>map(fn: (r) => ({ r with alias: \"交易量stddev_rate\" }))   ",
           "refId": "A",
           "resultFormat": "time_series",
           "select": [
@@ -341,42 +341,6 @@
             ]
           ],
           "tags": []
-        },
-        {
-          "groupBy": [
-            {
-              "params": [
-                "$__interval"
-              ],
-              "type": "time"
-            },
-            {
-              "params": [
-                "null"
-              ],
-              "type": "fill"
-            }
-          ],
-          "orderByTime": "ASC",
-          "policy": "default",
-          "query": "movingStddev = (every, period, column=\"_value\", tables=<-) =>\r\n  tables\r\n    |> window(every: every, period: period)\r\n    |> stddev(column:column)\r\n    |> duplicate(column: \"_stop\", as: \"_time\")\r\n    |> window(every: inf)\r\n\r\n\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"realtime\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"quoteAssetVolume\")\r\n  |> filter(fn: (r) => r[\"symbol\"] == \"${symbol}\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\r\n  |> movingStddev(every: 5m, period: ${period})\r\n  |>map(fn: (r) => ({ r with alias: \"stddev_ma\" }))   ",
-          "refId": "G",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "mean"
-              }
-            ]
-          ],
-          "tags": []
         }
       ],
       "thresholds": [],
@@ -589,7 +553,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.open +r.close + r.high)/4.0 }))  \r\n  |>map(fn: (r) => ({ r with alias: \"price\" }))   \r\n  |> tripleEMA(n: int( v: strings.replaceAll(v: \"${period2}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias: \"3EMA_AVG\" }))   ",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.open +r.close + r.high)/4.0 }))  \r\n  |>map(fn: (r) => ({ r with alias: \"price\" }))   \r\n  |> tripleEMA(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias: \"3EMA_AVG\" }))   ",
           "refId": "C",
           "resultFormat": "time_series",
           "select": [
@@ -941,8 +905,8 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nmoveSum = (every, period, column=\"_value\", tables=<-) =>\r\n  tables\r\n    |> window(every: every, period: period)\r\n    |> sum(column:column)\r\n    |> duplicate(column: \"_stop\", as: \"_time\")\r\n    |> window(every: inf)\r\n\r\n\r\n\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.open +r.close + r.high)/4.0 }))  \r\n  |> map(fn: (r) => ({ r with orgv: r._value }))  \r\n  |> difference()\r\n  |>moveSum(every: 5m, period: 30m)\r\n  |>map(fn: (r) => ({ r with alias: \"MS_DIF\" }))   \r\n\r\n",
-          "refId": "F",
+          "query": "a= from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.open +r.close + r.high)/4.0 }))  \r\n\r\norg = a\r\n    |> set(key: \"tag\", value: \"org\")\r\n    |> group()\r\n    \r\nshift = a\r\n    |> set(key: \"tag\", value: \"shift\")\r\n    |> timeShift(duration: 30m)\r\n    |> group()\r\n\r\nunion(tables: [org, shift])\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"tag\"], valueColumn: \"_value\")\r\n  |>map(fn: (r) => ({ r with _value: r.org - r.shift }))   \r\n  |>map(fn: (r) => ({ r with alias: \"shiftDif\" }))   ",
+          "refId": "G",
           "resultFormat": "time_series",
           "select": [
             [
@@ -1173,6 +1137,78 @@
           "policy": "default",
           "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (  r.high-r.low ) }))  \r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias: \"Range_MA1\" }))   \r\n\r\n",
           "refId": "B",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (  r.high-r.close ) }))  \r\n  |>map(fn: (r) => ({ r with alias: \"HC\" }))   \r\n\r\n",
+          "refId": "C",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (  r.close-r.low ) }))  \r\n  |>map(fn: (r) => ({ r with alias: \"CL\" }))   \r\n\r\n",
+          "refId": "E",
           "resultFormat": "time_series",
           "select": [
             [
@@ -1815,7 +1851,7 @@
   },
   "timepicker": {},
   "timezone": "utc",
-  "title": "k5m(2d)",
-  "uid": "H019k5m2d",
-  "version": 2
+  "title": "k5m(1d)",
+  "uid": "NN19k5m1d",
+  "version": 8
 }
