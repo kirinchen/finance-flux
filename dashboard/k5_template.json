@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 13,
-  "iteration": 1643211805196,
+  "iteration": 1643511781851,
   "links": [],
   "panels": [
     {
@@ -84,7 +84,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "movingStddev = (every, period, column=\"_value\", tables=<-) =>\r\n  tables\r\n    |> window(every: every, period: period)\r\n    |> stddev(column:column)\r\n    |> duplicate(column: \"_stop\", as: \"_time\")\r\n    |> window(every: inf)\r\n\r\n\r\nser = from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"realtime\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"quoteAssetVolume\")\r\n  |> filter(fn: (r) => r[\"symbol\"] == \"BTC\")\r\n\r\nstds= ser\r\n|> movingStddev(every:5m, period: ${period})\r\n\r\navgs= ser\r\n|> timedMovingAverage(every:5m, period: ${period2})\r\n\r\njoin(tables: {stds: stds, avgs: avgs}, on: [\"_time\"])\r\n    |> map(fn: (r) => ({ r with _value: r._value_stds/r._value_avgs    }))\r\n    |>map(fn: (r) => ({ r with alias: \"交易量stddev_rate\" }))   ",
+          "query": "movingStddev = (every, period, column=\"_value\", tables=<-) =>\r\n  tables\r\n    |> window(every: every, period: period)\r\n    |> stddev(column:column)\r\n    |> duplicate(column: \"_stop\", as: \"_time\")\r\n    |> window(every: inf)\r\n\r\n\r\nser = from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"realtime\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"quoteAssetVolume\")\r\n  |> filter(fn: (r) => r[\"symbol\"] == \"BTC\")\r\n  |> timeShift(duration: 5m)\r\nstds= ser\r\n|> movingStddev(every:5m, period: ${period})\r\n\r\navgs= ser\r\n|> timedMovingAverage(every:5m, period: ${period2})\r\n\r\njoin(tables: {stds: stds, avgs: avgs}, on: [\"_time\"])\r\n    |> map(fn: (r) => ({ r with _value: r._value_stds/r._value_avgs    }))\r\n    |>map(fn: (r) => ({ r with alias: \"交易量stddev_rate\" }))   ",
           "refId": "A",
           "resultFormat": "time_series",
           "select": [
@@ -215,7 +215,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"quoteAssetVolume\" or r._field == \"takerBuyQuoteAssetVolume\" )\r\n  )\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias: r._field+\"_MA\" }))   \r\n\r\n",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"quoteAssetVolume\" or r._field == \"takerBuyQuoteAssetVolume\" )\r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias: r._field+\"_MA\" }))   \r\n\r\n",
           "refId": "A",
           "resultFormat": "time_series",
           "select": [
@@ -251,7 +251,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"quoteAssetVolume\" or r._field == \"takerBuyQuoteAssetVolume\" )\r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (2.0*r.takerBuyQuoteAssetVolume) - r.quoteAssetVolume  }))  \r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias:\"DBUY_MA\" }))   \r\n\r\n",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"quoteAssetVolume\" or r._field == \"takerBuyQuoteAssetVolume\" )\r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (2.0*r.takerBuyQuoteAssetVolume) - r.quoteAssetVolume  }))  \r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias:\"DBUY_MA\" }))   \r\n\r\n",
           "refId": "C",
           "resultFormat": "time_series",
           "select": [
@@ -287,7 +287,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nimport \"math\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"quoteAssetVolume\"  )\r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value:  r.quoteAssetVolume *0.5  }))  \r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period2}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias:\"TH/MA_0.5\" }))   \r\n\r\n",
+          "query": "import \"strings\"\r\nimport \"math\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"quoteAssetVolume\"  )\r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value:  r.quoteAssetVolume *0.5  }))  \r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period2}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias:\"TH/MA_0.5\" }))   \r\n\r\n",
           "refId": "E",
           "resultFormat": "time_series",
           "select": [
@@ -323,7 +323,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"quoteAssetVolume\" or r._field == \"takerBuyQuoteAssetVolume\" )\r\n  )\r\n  |>map(fn: (r) => ({ r with alias: r._field }))   \r\n\r\n",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"quoteAssetVolume\" or r._field == \"takerBuyQuoteAssetVolume\" )\r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |>map(fn: (r) => ({ r with alias: r._field }))   \r\n\r\n",
           "refId": "F",
           "resultFormat": "time_series",
           "select": [
@@ -481,7 +481,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"open\" or r._field == \"close\" or r._field == \"high\" or r._field == \"low\")\r\n  )\r\n  |>map(fn: (r) => ({ r with alias: r._field }))   ",
+          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"open\" or r._field == \"close\" or r._field == \"high\" or r._field == \"low\")\r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |>map(fn: (r) => ({ r with alias: r._field }))   ",
           "refId": "A",
           "resultFormat": "time_series",
           "select": [
@@ -517,7 +517,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"order-measurement\" and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"price\" or r._field == \"stopPrice\" )\r\n  )\r\n  |>map(fn: (r) => ({ r with alias: \"order/\"+r._field+\"/\"+r.positionSide+\"/\"+r.strategy }))   ",
+          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"order-measurement\" and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"price\" or r._field == \"stopPrice\" )\r\n  )\r\n  |>map(fn: (r) => ({ r with alias: \"order/\"+r.positionSide+\"/\"+r.strategy+\"/\"+r.trigger }))   ",
           "refId": "B",
           "resultFormat": "time_series",
           "select": [
@@ -553,7 +553,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.open +r.close + r.high)/4.0 }))  \r\n  |>map(fn: (r) => ({ r with alias: \"price\" }))   \r\n  |> tripleEMA(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias: \"3EMA_AVG\" }))   ",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.open +r.close + r.high)/4.0 }))  \r\n  |>map(fn: (r) => ({ r with alias: \"price\" }))   \r\n  |> tripleEMA(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias: \"3EMA_AVG\" }))   ",
           "refId": "C",
           "resultFormat": "time_series",
           "select": [
@@ -589,7 +589,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.open +r.close + r.high)/4.0 }))  \r\n  |>map(fn: (r) => ({ r with alias: \"price\" }))   \r\n\r\n",
+          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.open +r.close + r.high)/4.0 }))  \r\n  |>map(fn: (r) => ({ r with alias: \"price\" }))   \r\n\r\n",
           "refId": "D",
           "resultFormat": "time_series",
           "select": [
@@ -725,7 +725,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.open +r.close + r.high)/4.0 }))  \r\n  |> map(fn: (r) => ({ r with orgv: r._value }))  \r\n  |> difference()\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with _value: if ${rated} then r._value/r.orgv else r._value }))   \r\n  |>map(fn: (r) => ({ r with alias: \"MA\" }))   \r\n\r\n",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.close + r.high)/3.0 }))    \r\n  |> timeShift(duration: 5m)  \r\n  |> map(fn: (r) => ({ r with orgv: r._value }))  \r\n  |> difference()\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with _value: if ${rated} then r._value/r.orgv else r._value }))   \r\n  |>map(fn: (r) => ({ r with alias: \"MA\" }))   \r\n\r\n",
           "refId": "A",
           "resultFormat": "time_series",
           "select": [
@@ -761,7 +761,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.open +r.close + r.high)/4.0 }))  \r\n  |> map(fn: (r) => ({ r with orgv: r._value }))  \r\n  |> difference()\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period2}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with _value: if ${rated} then r._value/r.orgv else r._value }))  \r\n  |>map(fn: (r) => ({ r with alias: \"MA2\" }))   \r\n\r\n",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.close + r.high)/3.0 }))    \r\n  |> timeShift(duration: 5m)  \r\n  |> map(fn: (r) => ({ r with orgv: r._value }))  \r\n  |> difference()\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period2}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with _value: if ${rated} then r._value/r.orgv else r._value }))  \r\n  |>map(fn: (r) => ({ r with alias: \"MA2\" }))   \r\n\r\n",
           "refId": "B",
           "resultFormat": "time_series",
           "select": [
@@ -797,7 +797,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nimport \"math\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.open +r.close + r.high)/4.0 }))  \r\n  |> map(fn: (r) => ({ r with orgv: r._value }))  \r\n  |> difference()\r\n  |>map(fn: (r) => ({ r with _value: math.abs(x: r._value)*8.0 }))  \r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period2}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with _value: if ${rated} then r._value/r.orgv else r._value }))  \r\n  |>map(fn: (r) => ({ r with alias: \"TH/ABS_MA2x8\" }))   \r\n\r\n",
+          "query": "import \"strings\"\r\nimport \"math\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.close + r.high)/3.0 }))    \r\n  |> timeShift(duration: 5m)  \r\n  |> map(fn: (r) => ({ r with orgv: r._value }))  \r\n  |> difference()\r\n  |>map(fn: (r) => ({ r with _value: math.abs(x: r._value)*8.0 }))  \r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period2}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with _value: if ${rated} then r._value/r.orgv else r._value }))  \r\n  |>map(fn: (r) => ({ r with alias: \"TH/ABS_MA2x8\" }))   \r\n\r\n",
           "refId": "C",
           "resultFormat": "time_series",
           "select": [
@@ -833,7 +833,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nimport \"math\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.open +r.close + r.high)/4.0 }))  \r\n  |> map(fn: (r) => ({ r with orgv: r._value }))  \r\n  |> difference()\r\n  |>map(fn: (r) => ({ r with _value: -math.abs(x: r._value)*8.0 }))  \r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period2}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with _value: if ${rated} then r._value/r.orgv else r._value }))  \r\n  |>map(fn: (r) => ({ r with alias: \"TH/-ABS_MA2x8\" }))   \r\n\r\n",
+          "query": "import \"strings\"\r\nimport \"math\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.close + r.high)/3.0 }))    \r\n  |> timeShift(duration: 5m)  \r\n  |> map(fn: (r) => ({ r with orgv: r._value }))  \r\n  |> difference()\r\n  |>map(fn: (r) => ({ r with _value: -math.abs(x: r._value)*8.0 }))  \r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period2}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with _value: if ${rated} then r._value/r.orgv else r._value }))  \r\n  |>map(fn: (r) => ({ r with alias: \"TH/-ABS_MA2x8\" }))   \r\n\r\n",
           "refId": "D",
           "resultFormat": "time_series",
           "select": [
@@ -869,7 +869,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.open +r.close + r.high)/4.0 }))  \r\n  |> map(fn: (r) => ({ r with orgv: r._value }))  \r\n  |> difference()\r\n  |>map(fn: (r) => ({ r with _value: if ${rated} then r._value/r.orgv else r._value }))   \r\n  |>map(fn: (r) => ({ r with alias: \"DIF\" }))   \r\n\r\n",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.close + r.high)/3.0 }))    \r\n  |> timeShift(duration: 5m)  \r\n  |> map(fn: (r) => ({ r with orgv: r._value }))  \r\n  |> difference()\r\n  |>map(fn: (r) => ({ r with _value: if ${rated} then r._value/r.orgv else r._value }))   \r\n  |>map(fn: (r) => ({ r with alias: \"DIF\" }))   \r\n\r\n",
           "refId": "E",
           "resultFormat": "time_series",
           "select": [
@@ -905,7 +905,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "a= from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.open +r.close + r.high)/4.0 }))  \r\n\r\norg = a\r\n    |> set(key: \"tag\", value: \"org\")\r\n    |> group()\r\n    \r\nshift = a\r\n    |> set(key: \"tag\", value: \"shift\")\r\n    |> timeShift(duration: 30m)\r\n    |> group()\r\n\r\nunion(tables: [org, shift])\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"tag\"], valueColumn: \"_value\")\r\n  |>map(fn: (r) => ({ r with _value: r.org - r.shift }))   \r\n  |>map(fn: (r) => ({ r with alias: \"shiftDif\" }))   ",
+          "query": "a= from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.close + r.high)/3.0 }))    \r\n  |> timeShift(duration: 5m)  \r\n\r\norg = a\r\n    |> set(key: \"tag\", value: \"org\")\r\n    |> group()\r\n    \r\nshift = a\r\n    |> set(key: \"tag\", value: \"shift\")\r\n    |> timeShift(duration: 30m)\r\n    |> group()\r\n\r\nunion(tables: [org, shift])\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"tag\"], valueColumn: \"_value\")\r\n  |>map(fn: (r) => ({ r with _value: r.org - r.shift }))   \r\n  |>map(fn: (r) => ({ r with alias: \"shiftDif\" }))   ",
           "refId": "G",
           "resultFormat": "time_series",
           "select": [
@@ -1063,7 +1063,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (  r.high-r.low ) }))  \r\n  |>map(fn: (r) => ({ r with alias: \"Range\" }))   \r\n\r\n",
+          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (  r.high-r.low ) }))  \r\n  |>map(fn: (r) => ({ r with alias: \"Range\" }))   \r\n\r\n",
           "refId": "D",
           "resultFormat": "time_series",
           "select": [
@@ -1099,7 +1099,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (  r.high-r.low ) }))  \r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period2}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias: \"Range_MA2\" }))   \r\n\r\n",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (  r.high-r.low ) }))  \r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period2}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias: \"Range_MA2\" }))   \r\n\r\n",
           "refId": "A",
           "resultFormat": "time_series",
           "select": [
@@ -1135,7 +1135,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (  r.high-r.low ) }))  \r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias: \"Range_MA1\" }))   \r\n\r\n",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (  r.high-r.low ) }))  \r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias: \"Range_MA1\" }))   \r\n\r\n",
           "refId": "B",
           "resultFormat": "time_series",
           "select": [
@@ -1171,7 +1171,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (  r.high-r.close ) }))  \r\n  |>map(fn: (r) => ({ r with alias: \"HC\" }))   \r\n\r\n",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (  r.high-r.close ) }))  \r\n  |>map(fn: (r) => ({ r with alias: \"HC\" }))   \r\n\r\n",
           "refId": "C",
           "resultFormat": "time_series",
           "select": [
@@ -1207,7 +1207,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (  r.close-r.low ) }))  \r\n  |>map(fn: (r) => ({ r with alias: \"CL\" }))   \r\n\r\n",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (  r.close-r.low ) }))  \r\n  |>map(fn: (r) => ({ r with alias: \"CL\" }))   \r\n\r\n",
           "refId": "E",
           "resultFormat": "time_series",
           "select": [
@@ -1343,7 +1343,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.open +r.close + r.high)/4.0 }))  \r\n  |> map(fn: (r) => ({ r with orgv: r._value }))  \r\n  |> difference()\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |> relativeStrengthIndex(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias: \"MA\" }))   \r\n\r\n",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.open +r.close + r.high)/4.0 }))  \r\n  |> map(fn: (r) => ({ r with orgv: r._value }))  \r\n  |> difference()\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |> relativeStrengthIndex(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias: \"MA\" }))   \r\n\r\n",
           "refId": "A",
           "resultFormat": "time_series",
           "select": [
@@ -1379,7 +1379,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.open +r.close + r.high)/4.0 }))  \r\n  |> map(fn: (r) => ({ r with orgv: r._value }))  \r\n  |> difference()\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period2}\", t: \"m\", u: \"\"))/5 )\r\n  |> relativeStrengthIndex(n: int( v: strings.replaceAll(v: \"${period2}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias: \"MA2\" }))   \r\n\r\n",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.open +r.close + r.high)/4.0 }))  \r\n  |> map(fn: (r) => ({ r with orgv: r._value }))  \r\n  |> difference()\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period2}\", t: \"m\", u: \"\"))/5 )\r\n  |> relativeStrengthIndex(n: int( v: strings.replaceAll(v: \"${period2}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias: \"MA2\" }))   \r\n\r\n",
           "refId": "B",
           "resultFormat": "time_series",
           "select": [
@@ -1505,7 +1505,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.open +r.close + r.high)/4.0 }))  \r\n  |> map(fn: (r) => ({ r with cp: r._value   }))\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period2}\", t: \"m\", u: \"\"))/5 )\r\n  |> map(fn: (r) => ({ r with _value: (r.cp-r._value)   }))\r\n\r\n  |>map(fn: (r) => ({ r with alias: \"DIF_Slow\" }))   ",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.open +r.close + r.high)/4.0 }))  \r\n  |> map(fn: (r) => ({ r with cp: r._value   }))\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period2}\", t: \"m\", u: \"\"))/5 )\r\n  |> map(fn: (r) => ({ r with _value: (r.cp-r._value)   }))\r\n\r\n  |>map(fn: (r) => ({ r with alias: \"DIF_Slow\" }))   ",
           "refId": "A",
           "resultFormat": "time_series",
           "select": [
@@ -1541,7 +1541,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.open +r.close + r.high)/4.0 }))  \r\n  |> map(fn: (r) => ({ r with cp: r._value   }))\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |> map(fn: (r) => ({ r with _value: (r.cp-r._value)   }))\r\n\r\n  |>map(fn: (r) => ({ r with alias: \"DIF\" }))   ",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.open +r.close + r.high)/4.0 }))  \r\n  |> map(fn: (r) => ({ r with cp: r._value   }))\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |> map(fn: (r) => ({ r with _value: (r.cp-r._value)   }))\r\n\r\n  |>map(fn: (r) => ({ r with alias: \"DIF\" }))   ",
           "refId": "B",
           "resultFormat": "time_series",
           "select": [
@@ -1577,7 +1577,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.open +r.close + r.high)/4.0 }))  \r\n  |> map(fn: (r) => ({ r with cp: r._value   }))\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |> map(fn: (r) => ({ r with _fast: r.cp -r._value    }))\r\n  |> map(fn: (r) => ({ r with _value: r.cp   }))\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period2}\", t: \"m\", u: \"\"))/5 )\r\n  |> map(fn: (r) => ({ r with _slow: r.cp -r._value   }))\r\n  |> map(fn: (r) => ({ r with _value: r._slow - r._fast   }))\r\n\r\n  |>map(fn: (r) => ({ r with alias: \"macd\" }))   ",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r._measurement == \"realtime\" and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.open +r.close + r.high)/4.0 }))  \r\n  |> map(fn: (r) => ({ r with cp: r._value   }))\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |> map(fn: (r) => ({ r with _fast: r.cp -r._value    }))\r\n  |> map(fn: (r) => ({ r with _value: r.cp   }))\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period2}\", t: \"m\", u: \"\"))/5 )\r\n  |> map(fn: (r) => ({ r with _slow: r.cp -r._value   }))\r\n  |> map(fn: (r) => ({ r with _value: r._slow - r._fast   }))\r\n\r\n  |>map(fn: (r) => ({ r with alias: \"macd\" }))   ",
           "refId": "C",
           "resultFormat": "time_series",
           "select": [
@@ -1648,9 +1648,9 @@
       {
         "allValue": null,
         "current": {
-          "selected": false,
-          "text": "BTC",
-          "value": "BTC"
+          "selected": true,
+          "text": "ETH",
+          "value": "ETH"
         },
         "datasource": "InfluxDB",
         "definition": "",
@@ -1853,5 +1853,5 @@
   "timezone": "utc",
   "title": "k5m(1d)",
   "uid": "NN19k5m1d",
-  "version": 8
+  "version": 18
 }
