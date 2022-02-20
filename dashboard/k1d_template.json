@@ -16,9 +16,135 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 6,
-  "iteration": 1642170732752,
+  "iteration": 1645375761323,
   "links": [],
   "panels": [
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "displayName": "${__field.labels.alias}"
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "hiddenSeries": false,
+      "id": 8,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": false,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.2.1",
+      "pointradius": 3,
+      "points": true,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "import \"strings\"\r\nimport \"math\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"analyze\" and\r\n    r.symbol == \"${symbol}\" and\r\n     r[\"_field\"] == \"high_low_persist_time\"\r\n  )\r\n  |> filter(fn: (r) => math.abs(x: r._value)>3.0*24.0*60.0*60.0 ) \r\n  |> timeShift(duration: 5m)  \r\n  |> map(fn: (r) => ({ r with _value: r._value/(60.0*60.0*24.0) }))  \r\n  |>map(fn: (r) => ({ r with alias: r._field }))   \r\n\r\n",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "PeakPoint",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
     {
       "aliasColors": {},
       "bars": false,
@@ -38,7 +164,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 0
+        "y": 6
       },
       "hiddenSeries": false,
       "id": 2,
@@ -236,7 +362,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 7
+        "y": 13
       },
       "hiddenSeries": false,
       "id": 4,
@@ -434,7 +560,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 14
+        "y": 20
       },
       "hiddenSeries": false,
       "id": 6,
@@ -906,7 +1032,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "d1",
+  "title": "k1d(1y)",
   "uid": "zL-DNTJ7k",
-  "version": 7
+  "version": 13
 }
