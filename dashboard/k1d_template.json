@@ -15,8 +15,8 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 6,
-  "iteration": 1646987919183,
+  "id": 15,
+  "iteration": 1648307014436,
   "links": [],
   "panels": [
     {
@@ -27,7 +27,6 @@
       "datasource": null,
       "fieldConfig": {
         "defaults": {
-          "custom": {},
           "displayName": "${__field.labels.alias}"
         },
         "overrides": []
@@ -58,7 +57,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.2.1",
+      "pluginVersion": "7.5.7",
       "pointradius": 1,
       "points": true,
       "renderer": "flot",
@@ -124,6 +123,7 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:99",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -132,6 +132,7 @@
           "show": true
         },
         {
+          "$$hashKey": "object:100",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -146,19 +147,20 @@
       }
     },
     {
-      "aliasColors": {},
+      "aliasColors": {
+        "supportPeak/low": "green"
+      },
       "bars": false,
       "dashLength": 10,
       "dashes": false,
       "datasource": null,
       "fieldConfig": {
         "defaults": {
-          "custom": {},
           "displayName": "${__field.labels.alias}"
         },
         "overrides": []
       },
-      "fill": 1,
+      "fill": 0,
       "fillGradient": 0,
       "gridPos": {
         "h": 7,
@@ -184,15 +186,17 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.2.1",
+      "pluginVersion": "7.5.7",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
       "seriesOverrides": [
         {
-          "alias": "supportPeak",
-          "bars": true,
-          "lines": false
+          "$$hashKey": "object:150",
+          "alias": "/supportPeak/",
+          "lines": false,
+          "pointradius": 4,
+          "points": true
         }
       ],
       "spaceLength": 10,
@@ -324,7 +328,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"analyze\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"support_price\")\r\n  |> filter(fn: (r) => r.symbol == \"${symbol}\" )\r\n  |>map(fn: (r) => ({ r with alias: \"supportPeak\" }))   ",
+          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"analyze\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"support_price\")\r\n  |> filter(fn: (r) => r.symbol == \"${symbol}\" )\r\n  |>map(fn: (r) => ({ r with alias: \"supportPeak/\"+r.supportSide }))   ",
           "refId": "D",
           "resultFormat": "time_series",
           "select": [
@@ -364,6 +368,7 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:159",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -372,6 +377,7 @@
           "show": true
         },
         {
+          "$$hashKey": "object:160",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -393,7 +399,6 @@
       "datasource": null,
       "fieldConfig": {
         "defaults": {
-          "custom": {},
           "displayName": "${__field.labels.alias}"
         },
         "overrides": []
@@ -424,7 +429,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.2.1",
+      "pluginVersion": "7.5.7",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -591,7 +596,6 @@
       "datasource": null,
       "fieldConfig": {
         "defaults": {
-          "custom": {},
           "displayName": "${__field.labels.alias}"
         },
         "overrides": []
@@ -622,7 +626,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.2.1",
+      "pluginVersion": "7.5.7",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -746,7 +750,7 @@
       }
     }
   ],
-  "schemaVersion": 26,
+  "schemaVersion": 27,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -760,6 +764,8 @@
         },
         "datasource": "InfluxDB",
         "definition": "",
+        "description": null,
+        "error": null,
         "hide": 1,
         "includeAll": false,
         "label": "symbol",
@@ -835,6 +841,8 @@
           "text": "3d",
           "value": "3d"
         },
+        "description": null,
+        "error": null,
         "hide": 1,
         "includeAll": false,
         "label": "period",
@@ -954,6 +962,8 @@
           "text": "30d",
           "value": "30d"
         },
+        "description": null,
+        "error": null,
         "hide": 1,
         "includeAll": false,
         "label": "period",
@@ -1065,6 +1075,66 @@
         "queryValue": "",
         "skipUrlSync": false,
         "type": "custom"
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": false,
+          "text": "0.5",
+          "value": "0.5"
+        },
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": "supportDay",
+        "multi": false,
+        "name": "supportDay",
+        "options": [
+          {
+            "selected": true,
+            "text": "0.5",
+            "value": "0.5"
+          },
+          {
+            "selected": false,
+            "text": "1.0",
+            "value": "1.0"
+          },
+          {
+            "selected": false,
+            "text": "2.0",
+            "value": "2.0"
+          },
+          {
+            "selected": false,
+            "text": "3.0",
+            "value": "3.0"
+          },
+          {
+            "selected": false,
+            "text": "5.0",
+            "value": "5.0"
+          },
+          {
+            "selected": false,
+            "text": "6.0",
+            "value": "6.0"
+          },
+          {
+            "selected": false,
+            "text": "7.0",
+            "value": "7.0"
+          },
+          {
+            "selected": false,
+            "text": "10.0",
+            "value": "10.0"
+          }
+        ],
+        "query": "0.5,1.0,2.0,3.0,5.0,6.0,7.0,10.0",
+        "skipUrlSync": false,
+        "type": "custom"
       }
     ]
   },
@@ -1076,5 +1146,5 @@
   "timezone": "",
   "title": "k1d(1y)",
   "uid": "zL-DNTJ7k",
-  "version": 18
+  "version": 5
 }
