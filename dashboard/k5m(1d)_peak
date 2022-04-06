@@ -1,0 +1,1321 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": 16,
+  "iteration": 1649214521747,
+  "links": [],
+  "panels": [
+    {
+      "aliasColors": {
+        "order/price/LONG/LIMIT": "green",
+        "order/price/LONG/TAKE_PROFIT": "super-light-green",
+        "order/price/SHORT/LIMIT": "red",
+        "order/price/SHORT/TAKE_PROFIT": "super-light-red"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "${__field.labels.alias}"
+        },
+        "overrides": []
+      },
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "hiddenSeries": false,
+      "id": 2,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.5.7",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "$$hashKey": "object:59",
+          "alias": "/order/",
+          "lines": false,
+          "points": true
+        },
+        {
+          "$$hashKey": "object:60",
+          "alias": "high",
+          "fillBelowTo": "low",
+          "lines": false
+        },
+        {
+          "$$hashKey": "object:61",
+          "alias": "low",
+          "lines": false
+        },
+        {
+          "$$hashKey": "object:62",
+          "alias": "close",
+          "fill": 0
+        },
+        {
+          "$$hashKey": "object:63",
+          "alias": "open",
+          "fill": 0
+        },
+        {
+          "$$hashKey": "object:64",
+          "alias": "AVG",
+          "fill": 0
+        },
+        {
+          "$$hashKey": "object:65",
+          "alias": "/th/",
+          "fill": 0
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"open\" or r._field == \"close\" or r._field == \"high\" or r._field == \"low\")\r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |>map(fn: (r) => ({ r with alias: r._field }))   ",
+          "refId": "K_VAL",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"order-measurement\" and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"price\" or r._field == \"stopPrice\" ) and \r\n    r._value > 0\r\n  )\r\n  |>map(fn: (r) => ({ r with alias: \"order/\"+r.positionSide+\"/\"+r.strategy+\"/\"+r.trigger }))   ",
+          "refId": "Order_record",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.close + r.high)/3.0 }))  \r\n  |>map(fn: (r) => ({ r with alias: \"price\" }))   \r\n  |> tripleEMA(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias: \"3EMA_AVG\" }))   ",
+          "refId": "3EMA_AVG",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.close + r.high)/3.0 }))  \r\n  |>map(fn: (r) => ({ r with alias: \"price\" }))   \r\n\r\n",
+          "refId": "price",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "avg= from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.close + r.high)/3.0 }))  \r\n  |> mean()\r\n    |> findColumn(\r\n      fn: (key) => true,\r\n      column: \"_value\"\r\n    )\r\n\r\ntop= from(bucket: \"quote\")\r\n  |> range(start: -2y)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"analyze\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"support_price\")\r\n  |> filter(fn: (r) => r[\"symbol\"] == \"${symbol}\")\r\n  |> map(fn: (r) => ({ r with sortv: r._value-avg[0] }))  \r\n  |> filter(fn: (r) => r.sortv>0)\r\n  |> sort(columns: [\"sortv\"])\r\n  |> findColumn(\r\n      fn: (key) => true,\r\n      column: \"_value\"\r\n  )\r\n\r\n  \r\nbottom= from(bucket: \"quote\")\r\n  |> range(start: -2y)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"analyze\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"support_price\")\r\n  |> filter(fn: (r) => r[\"symbol\"] == \"${symbol}\")\r\n  |> map(fn: (r) => ({ r with sortv:avg[0]- r._value }))  \r\n  |> filter(fn: (r) => r.sortv>0)\r\n  |> sort(columns: [\"sortv\"])\r\n  |> findColumn(\r\n      fn: (key) => true,\r\n      column: \"_value\"\r\n  )\r\n\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"open\" or r._field == \"close\" )\r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> map(fn: (r) => ({ r with _value: if r._field == \"open\" then top[0] else bottom[0] }))\r\n  |>map(fn: (r) => ({ r with alias: if r._field == \"open\" then \"th/top\" else \"th/bottom\"  }))   ",
+          "refId": "Near_TH",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "\r\nsr= from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.close + r.high)/3.0 }))  \r\n\r\n_sd=   sr\r\n    |> window(period: ${period},every: 5m)\r\n    |> stddev()\r\n    |> duplicate(column: \"_stop\", as: \"_time\")\r\n    |> window(every: inf)\r\n \r\n\r\n_ma=   sr\r\n    |> window(period: ${period},every: 5m)\r\n    |> mean()\r\n    |> duplicate(column: \"_stop\", as: \"_time\")\r\n    |> window(every: inf)\r\n\r\n_ma\r\n    |>map(fn: (r) => ({ r with alias: \"ma_${period}\" }))   \r\n    |> yield(name: \"ma\")\r\n\r\n\r\njoin(tables: {_sd: _sd, _ma: _ma}, on: [\"_time\"])    \r\n    |>map(fn: (r) => ({ r with _value: r._value__ma+(2.0 * r._value__sd) , alias : \"BOL/TOP\" }))   \r\n    |> yield(name: \"top\")\r\n\r\njoin(tables: {_sd: _sd, _ma: _ma}, on: [\"_time\"])    \r\n    |>map(fn: (r) => ({ r with _value: r._value__ma-(2.0 * r._value__sd) , alias : \"BOL/BOTTOM\" }))    \r\n    |> yield(name: \"bottom\")   \r\n",
+          "refId": "BOL",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "報價",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "order/price/LONG/LIMIT": "green",
+        "order/price/LONG/TAKE_PROFIT": "super-light-green",
+        "order/price/SHORT/LIMIT": "red",
+        "order/price/SHORT/TAKE_PROFIT": "super-light-red"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "${__field.labels.alias}"
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "hiddenSeries": false,
+      "id": 5,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.5.7",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "$$hashKey": "object:118",
+          "alias": "/TH/",
+          "fill": 0
+        },
+        {
+          "$$hashKey": "object:119",
+          "alias": "/order/",
+          "lines": false,
+          "points": true
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.close + r.high)/3.0 }))    \r\n  |> timeShift(duration: 5m)  \r\n  |> difference()\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias: \"DIF_MA\" }))   \r\n\r\n",
+          "refId": "MA",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "sr = from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"BTC\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.close + r.high)/3.0 }))    \r\n  |> timeShift(duration: 5m)  \r\n  |> difference()\r\n\r\n_top= sr\r\n  |>map(fn: (r) => ({ r with _value: if r._value>0 then r._value*1.2 else 0.0 }))   \r\n  |> movingAverage(n: 120)\r\n\r\n\r\n_top\r\n   |>map(fn: (r) => ({ r with alias: \"top\" }))   \r\n  |> yield(name: \"top\")\r\n\r\nsr\r\n  |>map(fn: (r) => ({ r with _value: if r._value<0 then r._value*1.2 else 0.0 }))   \r\n  |> movingAverage(n: 120)\r\n  |>map(fn: (r) => ({ r with alias: \"bottom\" }))   \r\n  |> yield(name: \"bottom\")\r\n\r\nmaxv= _top\r\n  |>max()\r\n  |> findColumn(\r\n      fn: (key) => true,\r\n      column: \"_value\"\r\n    )\r\n\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"order-measurement\" and\r\n    r.symbol == \"BTC\" and\r\n    (r._field == \"price\" or r._field == \"stopPrice\" )\r\n  )\r\n  |>map(fn: (r) => ({ r with alias: \"order/\"+r.positionSide+\"/\"+r.strategy+\"/\"+r.trigger , _value : maxv[0] }))    \r\n  |> yield(name: \"order\")",
+          "refId": "TOP/Bottom/Order",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "切線DIF",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:134",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:135",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "${__field.labels.alias}"
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 0,
+        "y": 11
+      },
+      "hiddenSeries": false,
+      "id": 12,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.5.7",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "/TH/",
+          "fill": 0
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"quoteAssetVolume\" or r._field == \"takerBuyQuoteAssetVolume\" )\r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias: r._field+\"_MA\" }))   \r\n\r\n",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"quoteAssetVolume\" or r._field == \"takerBuyQuoteAssetVolume\" )\r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (2.0*r.takerBuyQuoteAssetVolume) - r.quoteAssetVolume  }))  \r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias:\"DBUY_MA\" }))   \r\n\r\n",
+          "refId": "C",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "import \"strings\"\r\nimport \"math\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"quoteAssetVolume\"  )\r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value:  r.quoteAssetVolume *0.5  }))  \r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period2}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias:\"TH/MA_0.5\" }))   \r\n\r\n",
+          "refId": "E",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"quoteAssetVolume\" or r._field == \"takerBuyQuoteAssetVolume\" )\r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |>map(fn: (r) => ({ r with alias: r._field }))   \r\n\r\n",
+          "refId": "F",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "交易量",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "order/price/LONG/LIMIT": "green",
+        "order/price/LONG/TAKE_PROFIT": "super-light-green",
+        "order/price/SHORT/LIMIT": "red",
+        "order/price/SHORT/TAKE_PROFIT": "super-light-red"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "${__field.labels.alias}"
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 12,
+        "y": 11
+      },
+      "hiddenSeries": false,
+      "id": 14,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.5.7",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "$$hashKey": "object:268",
+          "alias": "/order/",
+          "lines": false,
+          "points": true
+        },
+        {
+          "$$hashKey": "object:269",
+          "alias": "high",
+          "fillBelowTo": "low",
+          "lines": false
+        },
+        {
+          "$$hashKey": "object:270",
+          "alias": "low",
+          "lines": false
+        },
+        {
+          "$$hashKey": "object:271",
+          "alias": "close",
+          "fill": 0
+        },
+        {
+          "$$hashKey": "object:272",
+          "alias": "open",
+          "fill": 0
+        },
+        {
+          "$$hashKey": "object:273",
+          "alias": "AVG",
+          "fill": 0
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (  r.high-r.low ) }))  \r\n  |>map(fn: (r) => ({ r with alias: \"Range\" }))   \r\n\r\n",
+          "refId": "D",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (  r.high-r.low ) }))  \r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period2}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias: \"Range_MA2\" }))   \r\n\r\n",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (  r.high-r.low ) }))  \r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias: \"Range_MA1\" }))   \r\n\r\n",
+          "refId": "B",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (  r.high-r.close ) }))  \r\n  |>map(fn: (r) => ({ r with alias: \"HC\" }))   \r\n\r\n",
+          "refId": "C",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (  r.close-r.low ) }))  \r\n  |>map(fn: (r) => ({ r with alias: \"CL\" }))   \r\n\r\n",
+          "refId": "E",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "KRange",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    }
+  ],
+  "refresh": false,
+  "schemaVersion": 27,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "allValue": null,
+        "current": {
+          "selected": false,
+          "text": "BTC",
+          "value": "BTC"
+        },
+        "datasource": "InfluxDB",
+        "definition": "import \"influxdata/influxdb/v1\"\r\nv1.tagValues(\r\n    bucket: v.bucket,\r\n    tag: \"symbol\",\r\n    predicate: (r) => r.source == \"binance\",\r\n    start: -1y\r\n)",
+        "description": null,
+        "error": null,
+        "hide": 1,
+        "includeAll": false,
+        "label": "symbol",
+        "multi": false,
+        "name": "symbol",
+        "options": [],
+        "query": "import \"influxdata/influxdb/v1\"\r\nv1.tagValues(\r\n    bucket: v.bucket,\r\n    tag: \"symbol\",\r\n    predicate: (r) => r.source == \"binance\",\r\n    start: -1y\r\n)",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": true,
+          "text": "120m",
+          "value": "120m"
+        },
+        "description": null,
+        "error": null,
+        "hide": 1,
+        "includeAll": false,
+        "label": "period",
+        "multi": false,
+        "name": "period",
+        "options": [
+          {
+            "selected": false,
+            "text": "5m",
+            "value": "5m"
+          },
+          {
+            "selected": false,
+            "text": "10m",
+            "value": "10m"
+          },
+          {
+            "selected": false,
+            "text": "15m",
+            "value": "15m"
+          },
+          {
+            "selected": false,
+            "text": "30m",
+            "value": "30m"
+          },
+          {
+            "selected": false,
+            "text": "60m",
+            "value": "60m"
+          },
+          {
+            "selected": false,
+            "text": "120m",
+            "value": "120m"
+          },
+          {
+            "selected": true,
+            "text": "180m",
+            "value": "180m"
+          },
+          {
+            "selected": false,
+            "text": "360m",
+            "value": "360m"
+          },
+          {
+            "selected": false,
+            "text": "480m",
+            "value": "480m"
+          },
+          {
+            "selected": false,
+            "text": "600m",
+            "value": "600m"
+          }
+        ],
+        "query": "5m,10m,15m,30m,60m,120m,180m,360m,480m,600m",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": true,
+          "text": "600m",
+          "value": "600m"
+        },
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": "period2",
+        "multi": false,
+        "name": "period2",
+        "options": [
+          {
+            "selected": false,
+            "text": "5m",
+            "value": "5m"
+          },
+          {
+            "selected": false,
+            "text": "15m",
+            "value": "15m"
+          },
+          {
+            "selected": false,
+            "text": "30m",
+            "value": "30m"
+          },
+          {
+            "selected": false,
+            "text": "45m",
+            "value": "45m"
+          },
+          {
+            "selected": false,
+            "text": "60m",
+            "value": "60m"
+          },
+          {
+            "selected": false,
+            "text": "90m",
+            "value": "90m"
+          },
+          {
+            "selected": false,
+            "text": "120m",
+            "value": "120m"
+          },
+          {
+            "selected": false,
+            "text": "180m",
+            "value": "180m"
+          },
+          {
+            "selected": false,
+            "text": "360m",
+            "value": "360m"
+          },
+          {
+            "selected": false,
+            "text": "480m",
+            "value": "480m"
+          },
+          {
+            "selected": true,
+            "text": "600m",
+            "value": "600m"
+          }
+        ],
+        "query": "5m,15m,30m,45m,60m,90m,120m,180m,360m,480m,600m",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": false,
+          "text": "false",
+          "value": "false"
+        },
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": "rated",
+        "multi": false,
+        "name": "rated",
+        "options": [
+          {
+            "selected": false,
+            "text": "true",
+            "value": "true"
+          },
+          {
+            "selected": true,
+            "text": "false",
+            "value": "false"
+          }
+        ],
+        "query": "true,false",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-2d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "utc",
+  "title": "k5m(1d)_peak",
+  "uid": "Peak5m1d",
+  "version": 13
+}
