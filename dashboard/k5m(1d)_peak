@@ -15,8 +15,8 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 16,
-  "iteration": 1649214521747,
+  "id": 20,
+  "iteration": 1650636574034,
   "links": [],
   "panels": [
     {
@@ -103,6 +103,20 @@
           "$$hashKey": "object:65",
           "alias": "/th/",
           "fill": 0
+        },
+        {
+          "$$hashKey": "object:212",
+          "alias": "/nextCount/",
+          "lines": false,
+          "pointradius": 4,
+          "points": true
+        },
+        {
+          "$$hashKey": "object:152",
+          "alias": "/peak/",
+          "lines": false,
+          "pointradius": 3,
+          "points": true
         }
       ],
       "spaceLength": 10,
@@ -126,7 +140,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"open\" or r._field == \"close\" or r._field == \"high\" or r._field == \"low\")\r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |>map(fn: (r) => ({ r with alias: r._field }))   ",
+          "query": "import \"math\"\r\nsr = from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"candlestick\")\r\n  |> filter(fn: (r) => r[\"interval\"] == \"5m\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"open\" or r[\"_field\"] == \"low\" or r[\"_field\"] == \"high\" or r[\"_field\"] == \"close\")\r\n  |> filter(fn: (r) => r[\"symbol\"] == \"${symbol}\")\r\n  |> timeShift(duration: 5m)  \r\n\r\n  \r\nsr\r\n  |>map(fn: (r) => ({ r with alias: r._field }))   \r\n  |> yield(name: \"fields\") \r\n\r\np= sr \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with bottom: if r.open < r.close then r.open else r.close , top: if r.open > r.close then r.open else r.close }))   \r\n  |> map(fn: (r) => ({ r with top_dif: r.high - r.top  , bottom_dif: r.low - r.bottom , solid_width: r.top - r.bottom }))    \r\n  |> map(fn: (r) => ({ r with pressure: if r.solid_width>0 then (r.top_dif + r.bottom_dif)/r.solid_width else 0.0 }))    \r\n  |> filter(fn: (r) => math.abs(x: r.pressure)   > 12)\r\n  |> map(fn: (r) => ({ r with _value: r.close })) \r\n\r\np\r\n  |> filter(fn: (r) => r.pressure>0)\r\n  |>map(fn: (r) => ({ r with alias: \"peak/shotP\"  }))     \r\n  |> yield(name: \"ps\") \r\n\r\np\r\n  |> filter(fn: (r) => r.pressure<0)\r\n  |>map(fn: (r) => ({ r with alias: \"peak/longP\"  }))     \r\n  |> yield(name: \"pl\") \r\n \r\n\r\n\r\n",
           "refId": "K_VAL",
           "resultFormat": "time_series",
           "select": [
@@ -162,7 +176,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"order-measurement\" and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"price\" or r._field == \"stopPrice\" ) and \r\n    r._value > 0\r\n  )\r\n  |>map(fn: (r) => ({ r with alias: \"order/\"+r.positionSide+\"/\"+r.strategy+\"/\"+r.trigger }))   ",
+          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"order-measurement\" and\r\n    r.symbol == \"${symbol}\" and\r\n    r.source == \"binance\" and\r\n    (r._field == \"price\" or r._field == \"stopPrice\" ) and \r\n    r._value > 0\r\n  )\r\n  |>map(fn: (r) => ({ r with alias: \"order/\"+r.positionSide+\"/\"+r.strategy+\"/\"+r.trigger }))   ",
           "refId": "Order_record",
           "resultFormat": "time_series",
           "select": [
@@ -325,6 +339,80 @@
             ]
           ],
           "tags": []
+        },
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "from(bucket: \"quote\")\r\n  |> range(start: -60d)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"analyze\")\r\n  |> filter(fn: (r) => r[\"nextCount\"] == \"high_1\" or r[\"nextCount\"] == \"high_0\" or r[\"nextCount\"] == \"low_1\" or r[\"nextCount\"] == \"low_0\")\r\n  |> filter(fn: (r) => r[\"symbol\"] == \"${symbol}\")\r\n  |>map(fn: (r) => ({ r with alias: \"nextCount/\" , _time: v.timeRangeStop}))   ",
+          "refId": "nextCount",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "  v_avg= from(bucket: \"quote\")\r\n    |> range(start: -35d)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"candlestick\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"quoteAssetVolume\")\r\n  |> filter(fn: (r) => r[\"symbol\"] == \"${symbol}\")\r\n  |> filter(fn: (r) => r[\"interval\"] == \"1d\")\r\n  |> movingAverage(n: 30)\r\n  |> findColumn(\r\n      fn: (key) => true,\r\n      column: \"_value\"\r\n    )\r\n\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"candlestick\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"quoteAssetVolume\" or r[\"_field\"] == \"close\" )\r\n  |> filter(fn: (r) => r[\"symbol\"] == \"${symbol}\")\r\n  |> filter(fn: (r) => r[\"interval\"] == \"5m\")    \r\n  |>map(fn: (r) => ({ r with _value: if r._field == \"quoteAssetVolume\" then (r._value*288.0)/v_avg[0] else r._value }))   \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> filter(fn: (r) => r.quoteAssetVolume > 5)  \r\n   |>map(fn: (r) => ({ r with _value: r.close , alias:\"peak/volm\" }))   ",
+          "refId": "VOL PEAK",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
         }
       ],
       "thresholds": [],
@@ -447,47 +535,11 @@
               "type": "fill"
             }
           ],
-          "orderByTime": "ASC",
-          "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.close + r.high)/3.0 }))    \r\n  |> timeShift(duration: 5m)  \r\n  |> difference()\r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias: \"DIF_MA\" }))   \r\n\r\n",
-          "refId": "MA",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "mean"
-              }
-            ]
-          ],
-          "tags": []
-        },
-        {
-          "groupBy": [
-            {
-              "params": [
-                "$__interval"
-              ],
-              "type": "time"
-            },
-            {
-              "params": [
-                "null"
-              ],
-              "type": "fill"
-            }
-          ],
           "hide": false,
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "sr = from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"BTC\" \r\n  )\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.close + r.high)/3.0 }))    \r\n  |> timeShift(duration: 5m)  \r\n  |> difference()\r\n\r\n_top= sr\r\n  |>map(fn: (r) => ({ r with _value: if r._value>0 then r._value*1.2 else 0.0 }))   \r\n  |> movingAverage(n: 120)\r\n\r\n\r\n_top\r\n   |>map(fn: (r) => ({ r with alias: \"top\" }))   \r\n  |> yield(name: \"top\")\r\n\r\nsr\r\n  |>map(fn: (r) => ({ r with _value: if r._value<0 then r._value*1.2 else 0.0 }))   \r\n  |> movingAverage(n: 120)\r\n  |>map(fn: (r) => ({ r with alias: \"bottom\" }))   \r\n  |> yield(name: \"bottom\")\r\n\r\nmaxv= _top\r\n  |>max()\r\n  |> findColumn(\r\n      fn: (key) => true,\r\n      column: \"_value\"\r\n    )\r\n\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"order-measurement\" and\r\n    r.symbol == \"BTC\" and\r\n    (r._field == \"price\" or r._field == \"stopPrice\" )\r\n  )\r\n  |>map(fn: (r) => ({ r with alias: \"order/\"+r.positionSide+\"/\"+r.strategy+\"/\"+r.trigger , _value : maxv[0] }))    \r\n  |> yield(name: \"order\")",
-          "refId": "TOP/Bottom/Order",
+          "query": "import \"math\"\r\nsr= from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"analyze\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"high_low_continue_diff\")\r\n  |> filter(fn: (r) => r[\"symbol\"] == \"${symbol}\")\r\n  |> timeShift(duration: 5m)  \r\n\r\nsr\r\n  |> map(fn: (r) => ({ r with alias: \"continue_diff\" })) \r\n  |> yield(name: \"continue_diff\")\r\n\r\n\r\nsrma = sr\r\n  |>map(fn: (r) => ({ r with _value: math.abs(x: r._value)*5.0  }))    \r\n  |> movingAverage(n: 180)\r\n  \r\n\r\n\r\ntop = srma\r\n    |> map(fn: (r) => ({ r with alias: \"top_th\" })) \r\n  |> yield(name: \"top_th\")\r\n\r\n\r\nbottom = srma\r\n  |>map(fn: (r) => ({ r with _value: -r._value }))    \r\n  |> map(fn: (r) => ({ r with alias: \"bottom_th\" })) \r\n  |> yield(name: \"bottom_th\")",
+          "refId": "A",
           "resultFormat": "time_series",
           "select": [
             [
@@ -550,7 +602,12 @@
       }
     },
     {
-      "aliasColors": {},
+      "aliasColors": {
+        "order/price/LONG/LIMIT": "green",
+        "order/price/LONG/TAKE_PROFIT": "super-light-green",
+        "order/price/SHORT/LIMIT": "red",
+        "order/price/SHORT/TAKE_PROFIT": "super-light-red"
+      },
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -561,7 +618,7 @@
         },
         "overrides": []
       },
-      "fill": 1,
+      "fill": 0,
       "fillGradient": 0,
       "gridPos": {
         "h": 11,
@@ -570,7 +627,7 @@
         "y": 11
       },
       "hiddenSeries": false,
-      "id": 12,
+      "id": 15,
       "legend": {
         "avg": false,
         "current": false,
@@ -591,12 +648,7 @@
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-        {
-          "alias": "/TH/",
-          "fill": 0
-        }
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
@@ -618,116 +670,8 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"quoteAssetVolume\" or r._field == \"takerBuyQuoteAssetVolume\" )\r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias: r._field+\"_MA\" }))   \r\n\r\n",
-          "refId": "A",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "mean"
-              }
-            ]
-          ],
-          "tags": []
-        },
-        {
-          "groupBy": [
-            {
-              "params": [
-                "$__interval"
-              ],
-              "type": "time"
-            },
-            {
-              "params": [
-                "null"
-              ],
-              "type": "fill"
-            }
-          ],
-          "orderByTime": "ASC",
-          "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"quoteAssetVolume\" or r._field == \"takerBuyQuoteAssetVolume\" )\r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (2.0*r.takerBuyQuoteAssetVolume) - r.quoteAssetVolume  }))  \r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias:\"DBUY_MA\" }))   \r\n\r\n",
-          "refId": "C",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "mean"
-              }
-            ]
-          ],
-          "tags": []
-        },
-        {
-          "groupBy": [
-            {
-              "params": [
-                "$__interval"
-              ],
-              "type": "time"
-            },
-            {
-              "params": [
-                "null"
-              ],
-              "type": "fill"
-            }
-          ],
-          "orderByTime": "ASC",
-          "policy": "default",
-          "query": "import \"strings\"\r\nimport \"math\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"quoteAssetVolume\"  )\r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value:  r.quoteAssetVolume *0.5  }))  \r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period2}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias:\"TH/MA_0.5\" }))   \r\n\r\n",
-          "refId": "E",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "mean"
-              }
-            ]
-          ],
-          "tags": []
-        },
-        {
-          "groupBy": [
-            {
-              "params": [
-                "$__interval"
-              ],
-              "type": "time"
-            },
-            {
-              "params": [
-                "null"
-              ],
-              "type": "fill"
-            }
-          ],
-          "orderByTime": "ASC",
-          "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"quoteAssetVolume\" or r._field == \"takerBuyQuoteAssetVolume\" )\r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |>map(fn: (r) => ({ r with alias: r._field }))   \r\n\r\n",
-          "refId": "F",
+          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (r.low + r.close + r.high)/3.0 }))  \r\n  |> map(fn: (r) => ({ r with orgv: r._value }))  \r\n  |> tripleEMA(n: 24)\r\n  |> map(fn: (r) => ({ r with emav: r._value }))  \r\n  |> map(fn: (r) => ({ r with _value: r.orgv }))  \r\n  |> movingAverage(n: 48)\r\n  |> map(fn: (r) => ({ r with _value: r.emav/r._value })) \r\n  |>map(fn: (r) => ({ r with alias: \"emaR\" }))    \r\n\r\n\r\n",
+          "refId": "price",
           "resultFormat": "time_series",
           "select": [
             [
@@ -750,7 +694,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "交易量",
+      "title": "報價",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -889,152 +833,8 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (  r.high-r.low ) }))  \r\n  |>map(fn: (r) => ({ r with alias: \"Range\" }))   \r\n\r\n",
+          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"analyze\" and\r\n    r.symbol == \"${symbol}\" and\r\n    ( r[\"_field\"] == \"high_low_continue_time\" or r[\"_field\"] == \"high_low_persist_time\")\r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> map(fn: (r) => ({ r with _value: r._value/(60.0*60.0*24.0) }))  \r\n  |>map(fn: (r) => ({ r with alias: r._field }))   \r\n\r\n",
           "refId": "D",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "mean"
-              }
-            ]
-          ],
-          "tags": []
-        },
-        {
-          "groupBy": [
-            {
-              "params": [
-                "$__interval"
-              ],
-              "type": "time"
-            },
-            {
-              "params": [
-                "null"
-              ],
-              "type": "fill"
-            }
-          ],
-          "orderByTime": "ASC",
-          "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (  r.high-r.low ) }))  \r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period2}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias: \"Range_MA2\" }))   \r\n\r\n",
-          "refId": "A",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "mean"
-              }
-            ]
-          ],
-          "tags": []
-        },
-        {
-          "groupBy": [
-            {
-              "params": [
-                "$__interval"
-              ],
-              "type": "time"
-            },
-            {
-              "params": [
-                "null"
-              ],
-              "type": "fill"
-            }
-          ],
-          "orderByTime": "ASC",
-          "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (  r.high-r.low ) }))  \r\n  |> movingAverage(n: int( v: strings.replaceAll(v: \"${period}\", t: \"m\", u: \"\"))/5 )\r\n  |>map(fn: (r) => ({ r with alias: \"Range_MA1\" }))   \r\n\r\n",
-          "refId": "B",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "mean"
-              }
-            ]
-          ],
-          "tags": []
-        },
-        {
-          "groupBy": [
-            {
-              "params": [
-                "$__interval"
-              ],
-              "type": "time"
-            },
-            {
-              "params": [
-                "null"
-              ],
-              "type": "fill"
-            }
-          ],
-          "orderByTime": "ASC",
-          "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (  r.high-r.close ) }))  \r\n  |>map(fn: (r) => ({ r with alias: \"HC\" }))   \r\n\r\n",
-          "refId": "C",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "mean"
-              }
-            ]
-          ],
-          "tags": []
-        },
-        {
-          "groupBy": [
-            {
-              "params": [
-                "$__interval"
-              ],
-              "type": "time"
-            },
-            {
-              "params": [
-                "null"
-              ],
-              "type": "fill"
-            }
-          ],
-          "orderByTime": "ASC",
-          "policy": "default",
-          "query": "import \"strings\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"5m\"  and\r\n    r.symbol == \"${symbol}\" \r\n  )\r\n  |> timeShift(duration: 5m)  \r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> map(fn: (r) => ({ r with _value: (  r.close-r.low ) }))  \r\n  |>map(fn: (r) => ({ r with alias: \"CL\" }))   \r\n\r\n",
-          "refId": "E",
           "resultFormat": "time_series",
           "select": [
             [
@@ -1057,7 +857,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "KRange",
+      "title": "TIME",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -1251,7 +1051,7 @@
             "value": "120m"
           },
           {
-            "selected": false,
+            "selected": true,
             "text": "180m",
             "value": "180m"
           },
@@ -1266,7 +1066,7 @@
             "value": "480m"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "600m",
             "value": "600m"
           }
@@ -1317,5 +1117,5 @@
   "timezone": "utc",
   "title": "k5m(1d)_peak",
   "uid": "Peak5m1d",
-  "version": 13
+  "version": 17
 }
