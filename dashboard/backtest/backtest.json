@@ -24,6 +24,7 @@
         "close": "super-light-blue",
         "order/LONG/turn": "orange",
         "order/SHORT/turn": "dark-blue",
+        "order/flat": "super-light-red",
         "supportPeak/low": "green"
       },
       "bars": false,
@@ -170,7 +171,7 @@
           "hide": false,
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"backtest\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"bol_bottom\" or r[\"_field\"] == \"bol_top\")\r\n  |> filter(fn: (r) => r[\"hex\"] == \"${hex}\")\r\n  |>map(fn: (r) => ({ r with alias: r._field }))     ",
+          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"backtest\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"h1_bottom\" or r[\"_field\"] == \"h1_top\" or r[\"_field\"] == \"m5_bottom\" or r[\"_field\"] == \"m5_top\")\r\n  |> filter(fn: (r) => r[\"hex\"] == \"${hex}\")\r\n  |>map(fn: (r) => ({ r with alias: r._field }))     ",
           "refId": "C",
           "resultFormat": "time_series",
           "select": [
@@ -419,7 +420,7 @@
           "hide": false,
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"math\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"backtest\")\r\n  |> filter(fn: (r) => r[\"method\"] == \"dev\")\r\n  |> filter(fn: (r) => r[\"hex\"] == \"${hex}\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"m5MaBarCount\" or r[\"_field\"] == \"h1MaBarCount\" or r[\"_field\"] == \"h1EmaBarCount\" )\r\n  |>map(fn: (r) => ({ r with _value: math.abs(x: r._value) }))  \r\n  |>map(fn: (r) => ({ r with _value: if r._value > 0.2 then r._value else 0.0 }))      \r\n  |>map(fn: (r) => ({ r with alias: r._field }))     \r\n",
+          "query": "import \"math\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"backtest\")\r\n  |> filter(fn: (r) => r[\"method\"] == \"dev\")\r\n  |> filter(fn: (r) => r[\"hex\"] == \"${hex}\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"m5MaBarCount\" or r[\"_field\"] == \"h1MaBarCount\" or r[\"_field\"] == \"h1EmaBarCount\" )\r\n  |>map(fn: (r) => ({ r with _value: math.abs(x: r._value) }))  \r\n  |>map(fn: (r) => ({ r with _value: if r._value > 0.1 then r._value else 0.0 }))      \r\n  |>map(fn: (r) => ({ r with alias: r._field }))     \r\n",
           "refId": "A",
           "resultFormat": "time_series",
           "select": [
@@ -898,12 +899,12 @@
     ]
   },
   "time": {
-    "from": "2021-05-12T00:00:00.000Z",
-    "to": "2021-05-30T23:59:59.000Z"
+    "from": "now-15d",
+    "to": "now-4d"
   },
   "timepicker": {},
   "timezone": "utc",
   "title": "backtest-Tailwind",
   "uid": "Tailwind",
-  "version": 56
+  "version": 57
 }
