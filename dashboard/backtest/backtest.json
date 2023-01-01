@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 2,
-  "iteration": 1672128555923,
+  "iteration": 1672586895415,
   "links": [],
   "panels": [
     {
@@ -245,7 +245,7 @@
           "hide": false,
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "from(bucket: \"quote\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"backtest\")\n  |> filter(fn: (r) => r[\"hex\"] == \"${hex}\")\n  |> filter(fn: (r) => r[\"_field\"] == \"flat\")\n  |>map(fn: (r) => ({ r with alias: \"order/\"+r._field }))    ",
+          "query": "from(bucket: \"quote\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"backtest\")\n  |> filter(fn: (r) => r[\"hex\"] == \"${hex}\")\n  |> filter(fn: (r) => r[\"_field\"] == \"fluctuation_FLAT\" or r[\"_field\"] == \"fluctuation_ROLLER_COASTER\" or r[\"_field\"] == \"fluctuation_SLOPE\")\n  |>map(fn: (r) => ({ r with alias: \"order/\"+r._field }))    ",
           "refId": "D",
           "resultFormat": "time_series",
           "select": [
@@ -420,7 +420,7 @@
           "hide": false,
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"math\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"backtest\")\r\n  |> filter(fn: (r) => r[\"method\"] == \"dev\")\r\n  |> filter(fn: (r) => r[\"hex\"] == \"${hex}\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"m5MaBarCount\" or r[\"_field\"] == \"h1MaBarCount\" or r[\"_field\"] == \"h1EmaBarCount\" )\r\n  |>map(fn: (r) => ({ r with _value: math.abs(x: r._value) }))  \r\n  |>map(fn: (r) => ({ r with _value: if r._value > 0.1 then r._value else 0.0 }))      \r\n  |>map(fn: (r) => ({ r with alias: r._field }))     \r\n",
+          "query": "import \"math\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"backtest\")\r\n  |> filter(fn: (r) => r[\"method\"] == \"dev\")\r\n  |> filter(fn: (r) => r[\"hex\"] == \"${hex}\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"m5MaBarCount\" or r[\"_field\"] == \"h1MaBarCount\" or r[\"_field\"] == \"h1EmaBarCount\" )\r\n//  |>map(fn: (r) => ({ r with _value: math.abs(x: r._value) }))  \r\n  // |>map(fn: (r) => ({ r with _value: if r._value > 0.1 then r._value else 0.0 }))     \r\n    |> exponentialMovingAverage(n: 7)\r\n  |>map(fn: (r) => ({ r with alias: r._field }))     \r\n",
           "refId": "A",
           "resultFormat": "time_series",
           "select": [
@@ -899,12 +899,12 @@
     ]
   },
   "time": {
-    "from": "now-15d",
-    "to": "now-4d"
+    "from": "now-20d",
+    "to": "now-5d"
   },
   "timepicker": {},
   "timezone": "utc",
   "title": "backtest-Tailwind",
   "uid": "Tailwind",
-  "version": 57
+  "version": 64
 }
