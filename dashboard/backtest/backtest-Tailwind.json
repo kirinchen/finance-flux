@@ -1,0 +1,895 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": 2,
+  "iteration": 1686842208024,
+  "links": [],
+  "panels": [
+    {
+      "aliasColors": {
+        "close": "super-light-blue",
+        "order/LONG/turn": "orange",
+        "order/SHORT/turn": "dark-blue",
+        "order/flat": "super-light-red",
+        "supportPeak/low": "green"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "${__field.labels.alias}",
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 17,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "hiddenSeries": false,
+      "id": 2,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.5.7",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "$$hashKey": "object:150",
+          "alias": "/point/",
+          "lines": false,
+          "pointradius": 1,
+          "points": true
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "ser= from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n   |> filter(fn: (r) =>\r\n    r._measurement == \"candlestick\" and\r\n    r.interval == \"${period}\" and\r\n    r.symbol == \"${symbol}\" and\r\n    (r._field == \"open\" or r._field == \"close\" or r._field == \"high\" or r._field == \"low\" or r._field == \"volume\")\r\n  )\r\n   |> timeShift(duration: ${period}) \r\n  |> drop(fn: (column) => column =~ /name/) \r\n  |>map(fn: (r) => ({ r with _value: if r._field == \"volume\" then (r._value * ${VolumeRate}) + ${VolumeBase} else r._value}))   \r\n  |>map(fn: (r) => ({ r with alias: r._field }))   \r\n     |>yield(name: \"ser\")  \r\n\r\n\r\n ",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "from(bucket: \"quote\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"backtest\")\n  |> filter(fn: (r) => r[\"_field\"] == \"startPrice\")\n  |> filter(fn: (r) => r[\"launchName\"] == \"pressure_historical_LONG\" or r[\"launchName\"] == \"pressure_historical_SHORT\" or r[\"launchName\"] == \"pressure_vol_LONG\" or r[\"launchName\"] == \"pressure_vol_SHORT\")\n  |>map(fn: (r) => ({ r with alias: \"point/\"+r.launchName }))     ",
+          "refId": "B",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"backtest\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"h1_bottom\" or r[\"_field\"] == \"h1_top\" or r[\"_field\"] == \"m5_bottom\" or r[\"_field\"] == \"m5_top\")\r\n  |> filter(fn: (r) => r[\"hex\"] == \"${hex}\")\r\n  |>map(fn: (r) => ({ r with alias: r._field }))     ",
+          "refId": "C",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"backtest\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"targetPrice\" or r[\"_field\"] == \"startPrice\")\r\n  |> drop(fn: (column) => column =~ /allCanceled/)   \r\n  |> filter(fn: (r) => r[\"hex\"] == \"${hex}\")\r\n  |> filter(fn: (r) => r[\"launchName\"] == \"parabola_SHORT\" or r[\"launchName\"] == \"parabola_LONG\")\r\n  |> filter(fn: (r) => r[\"mode\"] == \"LIMIT_LADDER\")\r\n  |>map(fn: (r) => ({ r with alias: \"order/\"+r.launchName +\"/\"+r._field }))     ",
+          "refId": "E",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "from(bucket: \"quote\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"backtest\")\n  |> filter(fn: (r) => r[\"hex\"] == \"${hex}\")\n  |> filter(fn: (r) => r[\"_field\"] == \"fluctuation_FLAT\" or r[\"_field\"] == \"fluctuation_ROLLER_COASTER\" or r[\"_field\"] == \"fluctuation_SLOPE\")\n  |>map(fn: (r) => ({ r with alias: \"order/\"+r._field }))    ",
+          "refId": "D",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "from(bucket: \"quote\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"backtest\")\n  |> filter(fn: (r) => r[\"method\"] == \"dev\")\n  |> filter(fn: (r) => r[\"_field\"] == \"turn\")\n  |> filter(fn: (r) => r[\"env\"] == \"backtest\")\n  |> filter(fn: (r) => r[\"hex\"] == \"${hex}\")\n  |> filter(fn: (r) => r[\"side\"] == \"LONG\" or r[\"side\"] == \"SHORT\")\n  |>map(fn: (r) => ({ r with alias: \"order/\"+r.side +\"/\"+r._field }))       ",
+          "refId": "F",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "報價",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:159",
+          "format": "none",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:160",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "supportPeak/low": "green"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "${__field.labels.alias}"
+        },
+        "overrides": []
+      },
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "hiddenSeries": false,
+      "id": 5,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.5.7",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "$$hashKey": "object:150",
+          "alias": "/post/",
+          "lines": false,
+          "pointradius": 1,
+          "points": true
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "import \"math\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"backtest\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"pTime\")\r\n  |>map(fn: (r) => ({ r with alias: r._field , _value : r._value }))     \r\n",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "報價",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:159",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:160",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "supportPeak/low": "green"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "${__field.labels.alias}"
+        },
+        "overrides": []
+      },
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 25
+      },
+      "hiddenSeries": false,
+      "id": 4,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.5.7",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "$$hashKey": "object:150",
+          "alias": "/post/",
+          "lines": false,
+          "pointradius": 1,
+          "points": true
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "slope= from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"backtest\")\r\n  |> filter(fn: (r) => r[\"method\"] == \"velocityTurn\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"slopeMA\")\r\n  |> filter(fn: (r) => r.interval == \"h4\")\r\n  |> filter(fn: (r) => r[\"hex\"] == \"${hex}\")\r\n    \r\npost=from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"backtest\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"startPrice\")\r\n  |> filter(fn: (r) => r[\"hex\"] == \"$hex\" )    \r\n\r\n\r\n  join(tables: {post: post, slope: slope}, on: [\"_time\"])\r\n    |> map(fn: (r) => ({ r with _value: r._value_slope      }))\r\n    |> drop(columns: [\"allCanceled\"])    \r\n    |>map(fn: (r) => ({ r with alias: \"post/\"+r.side }))   ",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"backtest\")\r\n  |> filter(fn: (r) => r[\"method\"] == \"dev\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"h1MaSlope\" or r._field == \"h1M5Macd\" or r._field == \"m5Macd\" or r._field == \"m5MaSlope\" or r._field ==\"shortExtremeLeave\" or r._field ==\"longExtremeLeave\" or r._field == \"sumExtremeLeave\" or r._field == \"h4MaSlope\" )\r\n  |> filter(fn: (r) => r[\"hex\"] == \"${hex}\")\r\n  |>map(fn: (r) => ({ r with alias: r._field }))     ",
+          "refId": "B",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "報價",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:159",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:160",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    }
+  ],
+  "refresh": false,
+  "schemaVersion": 27,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "allValue": null,
+        "current": {
+          "selected": false,
+          "text": "BTC",
+          "value": "BTC"
+        },
+        "datasource": "InfluxDB",
+        "definition": "",
+        "description": null,
+        "error": null,
+        "hide": 1,
+        "includeAll": false,
+        "label": "symbol",
+        "multi": false,
+        "name": "symbol",
+        "options": [
+          {
+            "selected": false,
+            "text": "ADA",
+            "value": "ADA"
+          },
+          {
+            "selected": false,
+            "text": "BCH",
+            "value": "BCH"
+          },
+          {
+            "selected": false,
+            "text": "BNB",
+            "value": "BNB"
+          },
+          {
+            "selected": true,
+            "text": "BTC",
+            "value": "BTC"
+          },
+          {
+            "selected": false,
+            "text": "DOT",
+            "value": "DOT"
+          },
+          {
+            "selected": false,
+            "text": "EOS",
+            "value": "EOS"
+          },
+          {
+            "selected": false,
+            "text": "ETC",
+            "value": "ETC"
+          },
+          {
+            "selected": false,
+            "text": "ETH",
+            "value": "ETH"
+          },
+          {
+            "selected": false,
+            "text": "LTC",
+            "value": "LTC"
+          },
+          {
+            "selected": false,
+            "text": "XRP",
+            "value": "XRP"
+          }
+        ],
+        "query": "import \"influxdata/influxdb/v1\"\r\nv1.tagValues(\r\n    bucket: v.bucket,\r\n    tag: \"symbol\",\r\n    predicate: (r) => true,\r\n    start: -1y\r\n)",
+        "refresh": 0,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": false,
+          "text": "5m",
+          "value": "5m"
+        },
+        "description": null,
+        "error": null,
+        "hide": 1,
+        "includeAll": false,
+        "label": "period",
+        "multi": false,
+        "name": "period",
+        "options": [
+          {
+            "selected": false,
+            "text": "1d",
+            "value": "1d"
+          },
+          {
+            "selected": true,
+            "text": "5m",
+            "value": "5m"
+          }
+        ],
+        "query": "1d,5m",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "0.05",
+          "value": "0.05"
+        },
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "label": "VolumeRate",
+        "name": "VolumeRate",
+        "options": [
+          {
+            "selected": false,
+            "text": "0.1",
+            "value": "0.1"
+          }
+        ],
+        "query": "0.05",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "ae927656d58b769",
+          "value": "ae927656d58b769"
+        },
+        "description": null,
+        "error": null,
+        "hide": 1,
+        "label": "hex",
+        "name": "hex",
+        "options": [
+          {
+            "selected": true,
+            "text": "ae927656d58b769",
+            "value": "ae927656d58b769"
+          }
+        ],
+        "query": "ae927656d58b769",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": false,
+          "text": "all",
+          "value": "all"
+        },
+        "datasource": "InfluxDB",
+        "definition": "import \"influxdata/influxdb/v1\"\r\nv1.tagValues(\r\n    bucket: v.bucket,\r\n    tag: \"launchName\",\r\n    predicate: (r) => true,\r\n    start: -1y\r\n)",
+        "description": null,
+        "error": null,
+        "hide": 1,
+        "includeAll": false,
+        "label": "launchName",
+        "multi": false,
+        "name": "launchName",
+        "options": [
+          {
+            "selected": true,
+            "text": "all",
+            "value": "all"
+          },
+          {
+            "selected": false,
+            "text": "peak",
+            "value": "peak"
+          }
+        ],
+        "query": "import \"influxdata/influxdb/v1\"\r\nv1.tagValues(\r\n    bucket: v.bucket,\r\n    tag: \"launchName\",\r\n    predicate: (r) => true,\r\n    start: -1y\r\n)",
+        "refresh": 0,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "27500.0",
+          "value": "27500.0"
+        },
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "label": "VolumeBase",
+        "name": "VolumeBase",
+        "options": [
+          {
+            "selected": false,
+            "text": "0.0",
+            "value": "0.0"
+          }
+        ],
+        "query": "27500.0",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": {
+    "from": "2023-04-02T01:30:21.523Z",
+    "to": "2023-04-05T08:36:41.321Z"
+  },
+  "timepicker": {},
+  "timezone": "utc",
+  "title": "backtest-Tailwind",
+  "uid": "Tailwind",
+  "version": 81
+}
