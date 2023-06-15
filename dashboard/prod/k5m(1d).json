@@ -1,0 +1,559 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": 2,
+  "iteration": 1686842482541,
+  "links": [],
+  "panels": [
+    {
+      "aliasColors": {
+        "close": "blue",
+        "order/price/LONG/LIMIT": "green",
+        "order/price/LONG/TAKE_PROFIT": "super-light-green",
+        "order/price/SHORT/LIMIT": "red",
+        "order/price/SHORT/TAKE_PROFIT": "super-light-red"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "${__field.labels.alias}"
+        },
+        "overrides": []
+      },
+      "fill": 0,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 14,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "hiddenSeries": false,
+      "id": 2,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.5.7",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "$$hashKey": "object:96",
+          "alias": "/order/",
+          "lines": false,
+          "points": true
+        },
+        {
+          "$$hashKey": "object:97",
+          "alias": "high",
+          "fillBelowTo": "low",
+          "lines": false
+        },
+        {
+          "$$hashKey": "object:98",
+          "alias": "low",
+          "lines": false
+        },
+        {
+          "$$hashKey": "object:99",
+          "alias": "close",
+          "fill": 0
+        },
+        {
+          "$$hashKey": "object:100",
+          "alias": "open",
+          "fill": 0
+        },
+        {
+          "$$hashKey": "object:101",
+          "alias": "AVG",
+          "fill": 0
+        },
+        {
+          "$$hashKey": "object:102",
+          "alias": "/except/",
+          "fill": 0
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "ser= from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"candlestick\")\r\n  |> filter(fn: (r) => r[\"interval\"] == \"5m\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"close\" or r._field == \"volume\")\r\n  |> filter(fn: (r) => r[\"symbol\"] == \"${symbol}\")\r\n  |> timeShift(duration: 5m)\r\n   |>map(fn: (r) => ({ r with _value: if r._field == \"volume\" then (r._value * ${VolumeRate}) + ${VolumeBase} else r._value}))     \r\n  |>map(fn: (r) => ({ r with alias: r._field }))     \r\n  |>yield(name: \"ser\")\r\n\r\n\r\n ser\r\n   |> movingAverage(n: 240) \r\n   |>map(fn: (r) => ({ r with alias: \"except/h1Ma20\" }))  \r\n  |>yield(name: \"h1Ma20\")      \r\n\r\n\r\n ser\r\n   |> movingAverage(n: 20) \r\n   |>map(fn: (r) => ({ r with alias: \"except/Ma20\" }))     \r\n   |>yield(name: \"Ma20\")         \r\n\r\n\r\n ser\r\n   |> movingAverage(n: 960) \r\n   |>map(fn: (r) => ({ r with alias: \"except/h4Ma20\" }))     \r\n   |>yield(name: \"h4Ma20\")         ",
+          "refId": "C",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"test\")\r\n  |> filter(fn: (r) =>  r[\"_field\"] == \"h1Except_bottom\" or r[\"_field\"] == \"h1Except_top\" or r[\"_field\"] == \"h1Except\" or r[\"_field\"] == \"h4Except_bottom\" or r[\"_field\"] == \"h4Except_top\" or r[\"_field\"] == \"h4Except\" or r[\"_field\"] == \"m5EmaPoints\" )\r\n    |>map(fn: (r) => ({ r with alias: \"except/\"+r._field }))     ",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"candlestick\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"close\" or r[\"_field\"] == \"volume\")\r\n  |> filter(fn: (r) => r[\"symbol\"] == \"BTC\")\r\n  |> filter(fn: (r) => r[\"interval\"] == \"5m\")\r\n  |> timeShift(duration: 5m)\r\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> filter(fn: (r) => r[\"volume\"] > 12000.0)\r\n  |> map(fn: (r) => ({ r with _value: r.close ,alias: \"order/volume\"  }))  \r\n  ",
+          "refId": "B",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "報價",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:72",
+          "format": "none",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:73",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "order/price/LONG/LIMIT": "green",
+        "order/price/LONG/TAKE_PROFIT": "super-light-green",
+        "order/price/SHORT/LIMIT": "red",
+        "order/price/SHORT/TAKE_PROFIT": "super-light-red"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "${__field.labels.alias}"
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "hiddenSeries": false,
+      "id": 3,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.5.7",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "$$hashKey": "object:96",
+          "alias": "/Slope/",
+          "fill": 0,
+          "lines": true
+        },
+        {
+          "$$hashKey": "object:97",
+          "alias": "high",
+          "fillBelowTo": "low",
+          "lines": false
+        },
+        {
+          "$$hashKey": "object:98",
+          "alias": "low",
+          "lines": false
+        },
+        {
+          "$$hashKey": "object:99",
+          "alias": "close",
+          "fill": 0
+        },
+        {
+          "$$hashKey": "object:100",
+          "alias": "open",
+          "fill": 0
+        },
+        {
+          "$$hashKey": "object:101",
+          "alias": "AVG",
+          "fill": 0
+        },
+        {
+          "$$hashKey": "object:102",
+          "alias": "/th/",
+          "fill": 0
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "import \"math\"\r\nser= from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"candlestick\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"volume\" or r[\"_field\"] == \"close\" )\r\n  |> filter(fn: (r) => r[\"category\"] == \"cryptocurrency\")\r\n  |> filter(fn: (r) => r[\"interval\"] == \"5m\")\r\n  |> filter(fn: (r) => r[\"source\"] == \"binance\")\r\n  |> filter(fn: (r) => r[\"symbol\"] == \"BTC\")\r\n  |> timeShift(duration: 5m)\r\n\r\nvolSer= ser\r\n  |> filter(fn: (r) => r[\"_field\"] == \"volume\" )\r\n  |>map(fn: (r) => ({ r with alias: r._field }))    \r\n  |> yield(name: \"volume\")   \r\n\r\ndiffSer = ser\r\n|> filter(fn: (r) => r[\"_field\"] == \"close\" )\r\n|> difference()\r\n\r\n\r\njoin(tables: {diffSer: diffSer, volSer: volSer}, on: [\"_time\"])\r\n    |> map(fn: (r) => ({ r with _value: r._value_diffSer/math.abs(x: r._value_diffSer)* r._value_volSer    }))\r\n    |>map(fn: (r) => ({ r with alias: \"dVol\" }))  \r\n    |> yield(name: \"dVol\")   ",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "報價",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:72",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:73",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    }
+  ],
+  "refresh": false,
+  "schemaVersion": 27,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "allValue": null,
+        "current": {
+          "selected": false,
+          "text": "BTC",
+          "value": "BTC"
+        },
+        "datasource": "InfluxDB",
+        "definition": "import \"influxdata/influxdb/v1\"\r\nv1.tagValues(\r\n    bucket: v.bucket,\r\n    tag: \"symbol\",\r\n    predicate: (r) => r.source == \"binance\",\r\n    start: -1y\r\n)",
+        "description": null,
+        "error": null,
+        "hide": 1,
+        "includeAll": false,
+        "label": "symbol",
+        "multi": false,
+        "name": "symbol",
+        "options": [],
+        "query": "import \"influxdata/influxdb/v1\"\r\nv1.tagValues(\r\n    bucket: v.bucket,\r\n    tag: \"symbol\",\r\n    predicate: (r) => r.source == \"binance\",\r\n    start: -1y\r\n)",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "0.03",
+          "value": "0.03"
+        },
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "label": "periVolumeRated",
+        "name": "VolumeRate",
+        "options": [
+          {
+            "selected": true,
+            "text": "0.03",
+            "value": "0.03"
+          }
+        ],
+        "query": "0.03",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "25000.0",
+          "value": "25000.0"
+        },
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "label": "VolumeBase",
+        "name": "VolumeBase",
+        "options": [
+          {
+            "selected": true,
+            "text": "25000.0",
+            "value": "25000.0"
+          }
+        ],
+        "query": "25000.0",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": false,
+          "text": "false",
+          "value": "false"
+        },
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": "rated",
+        "multi": false,
+        "name": "rated",
+        "options": [
+          {
+            "selected": false,
+            "text": "true",
+            "value": "true"
+          },
+          {
+            "selected": true,
+            "text": "false",
+            "value": "false"
+          }
+        ],
+        "query": "true,false",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "utc",
+  "title": "k5m(1d)",
+  "uid": "NN19k5m1d",
+  "version": 39
+}
