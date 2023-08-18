@@ -16,12 +16,12 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 5,
-  "iteration": 1690855087589,
+  "iteration": 1692324056994,
   "links": [],
   "panels": [
     {
       "aliasColors": {
-        "bolR": "yellow",
+        "bolR": "red",
         "close": "blue",
         "low": "orange",
         "order/price/LONG/LIMIT": "green",
@@ -36,7 +36,8 @@
       "datasource": null,
       "fieldConfig": {
         "defaults": {
-          "displayName": "${__field.labels.alias}"
+          "displayName": "${__field.labels.alias}",
+          "unit": "none"
         },
         "overrides": []
       },
@@ -135,7 +136,7 @@
           "hide": false,
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nimport \"math\"\r\nimport \"date\"\r\nmaShiftDuration= duration(v: \"-\"+string(v: (5*${y1_ma_n})) +\"m\")\r\nfrom(bucket: \"quote\")\r\n  |> range(start: date.add(d: maShiftDuration , to : v.timeRangeStart  ) , stop:v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"mark\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"vPeB\" or r[\"_field\"] == \"p\" or r[\"_field\"] == \"hl\" or r[\"_field\"] == \"co\" or r[\"_field\"] == \"bolR\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)  \r\n  |>map(fn: (r) => ({ r with alias:  r._field  }))        \r\n  |>map(fn: (r) => ({ r with _value: if  strings.containsStr(v: \"${abs_field}}\", substr: r._field) then  math.abs(x: r._value) else r._value}))      \r\n  |> movingAverage(n: ${y1_ma_n})\r\n  |> yield(name: \"mean\")\r\n   ",
+          "query": "import \"strings\"\r\nimport \"math\"\r\nimport \"date\"\r\nmaShiftDuration= duration(v: \"-\"+string(v: (5*${y1_ma_n})) +\"m\")\r\nfrom(bucket: \"quote\")\r\n  |> range(start: date.add(d: maShiftDuration , to : v.timeRangeStart  ) , stop:v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"mark\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"p\" or r[\"_field\"] == \"hl\" or r[\"_field\"] == \"co\" or r[\"_field\"] == \"bolR\" or r[\"_field\"] == \"vPeB\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)  \r\n  |>map(fn: (r) => ({ r with alias:  r._field  }))        \r\n  |>map(fn: (r) => ({ r with _value: if  strings.containsStr(v: \"${abs_field}}\", substr: r._field) then  math.abs(x: r._value) else r._value}))      \r\n  |> movingAverage(n: ${y1_ma_n})\r\n  |> yield(name: \"mean\")\r\n   ",
           "refId": "SR",
           "resultFormat": "time_series",
           "select": [
@@ -172,7 +173,7 @@
           "hide": false,
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nimport \"math\"\r\n\r\nser= from(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"candlestick\")\r\n  |> filter(fn: (r) => r[\"interval\"] == \"5m\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"close\" or r._field == \"volume\" or r[\"_field\"] == \"high\" or r[\"_field\"] == \"low\")\r\n  |> filter(fn: (r) => r[\"symbol\"] == \"${symbol}\")\r\n  |> timeShift(duration: 5m)\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)    \r\n  |>map(fn: (r) => ({ r with alias: \"y2/\"+r._field }))     \r\n  |>map(fn: (r) => ({ r with _value: if  strings.containsStr(v: \"${abs_field}}\", substr: r._field) then  math.abs(x: r._value) else r._value}))    \r\n|> movingAverage(n: ${y2_ma_n})  \r\n  |>yield(name: \"ser\")\r\n\r\n",
+          "query": "import \"strings\"\r\nimport \"math\"\r\nimport \"date\"\r\nmaShiftDuration= duration(v: \"-\"+string(v: (5*${y2_ma_n})) +\"m\")\r\nser= from(bucket: \"quote\")\r\n  |> range(start: date.add(d: maShiftDuration , to : v.timeRangeStart  ) , stop:v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"candlestick\")\r\n  |> filter(fn: (r) => r[\"interval\"] == \"5m\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"close\" or r._field == \"volume\" or r[\"_field\"] == \"high\" or r[\"_field\"] == \"low\")\r\n  |> filter(fn: (r) => r[\"symbol\"] == \"${symbol}\")\r\n  |> timeShift(duration: 5m)\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)    \r\n  |>map(fn: (r) => ({ r with alias: \"y2/\"+r._field }))     \r\n  |>map(fn: (r) => ({ r with _value: if  strings.containsStr(v: \"${abs_field}}\", substr: r._field) then  math.abs(x: r._value) else r._value}))    \r\n|> movingAverage(n: ${y2_ma_n})  \r\n  |>yield(name: \"ser\")\r\n\r\n",
           "refId": "OCHLV_Y2",
           "resultFormat": "time_series",
           "select": [
@@ -209,7 +210,7 @@
           "hide": false,
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\"\r\nimport \"math\"\r\nfrom(bucket: \"quote\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"mark\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"vPeB\" or r[\"_field\"] == \"p\" or r[\"_field\"] == \"hl\" or r[\"_field\"] == \"co\" or r[\"_field\"] == \"bolR\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)  \r\n  |>map(fn: (r) => ({ r with alias:  \"y2/\"+r._field  }))        \r\n  |>map(fn: (r) => ({ r with _value: if  strings.containsStr(v: \"${abs_field}}\", substr: r._field) then  math.abs(x: r._value) else r._value}))      \r\n  |> movingAverage(n: ${y2_ma_n})  \r\n  |> yield(name: \"mean\")\r\n   ",
+          "query": "import \"strings\"\r\nimport \"math\"\r\nimport \"date\"\r\nmaShiftDuration= duration(v: \"-\"+string(v: (5*${y2_ma_n})) +\"m\")\r\nser= from(bucket: \"quote\")\r\n  |> range(start: date.add(d: maShiftDuration , to : v.timeRangeStart  ) , stop:v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"mark\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"p\" or r[\"_field\"] == \"hl\" or r[\"_field\"] == \"co\" or r[\"_field\"] == \"bolR\" or r[\"_field\"] == \"vPeB\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)  \r\n  |>map(fn: (r) => ({ r with alias:  \"y2/\"+r._field  }))        \r\n  |>map(fn: (r) => ({ r with _value: if  strings.containsStr(v: \"${abs_field}}\", substr: r._field) then  math.abs(x: r._value) else r._value}))      \r\n  |> movingAverage(n: ${y2_ma_n})  \r\n  |> yield(name: \"mean\")\r\n   ",
           "refId": "SR_Y2",
           "resultFormat": "time_series",
           "select": [
@@ -259,7 +260,7 @@
         },
         {
           "$$hashKey": "object:73",
-          "format": "short",
+          "format": "none",
           "label": null,
           "logBase": 1,
           "max": null,
@@ -310,15 +311,16 @@
       {
         "allValue": null,
         "current": {
-          "selected": true,
-          "tags": [],
+          "selected": false,
           "text": [
             "vPeB",
-            "co"
+            "co",
+            "bolR"
           ],
           "value": [
             "vPeB",
-            "co"
+            "co",
+            "bolR"
           ]
         },
         "description": null,
@@ -330,7 +332,7 @@
         "name": "abs_field",
         "options": [
           {
-            "selected": true,
+            "selected": false,
             "text": "vPeB",
             "value": "vPeB"
           },
@@ -340,7 +342,7 @@
             "value": "p"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "co",
             "value": "co"
           },
@@ -358,8 +360,8 @@
       {
         "current": {
           "selected": false,
-          "text": "100",
-          "value": "100"
+          "text": "1",
+          "value": "1"
         },
         "description": null,
         "error": null,
@@ -369,17 +371,17 @@
         "options": [
           {
             "selected": true,
-            "text": "100",
-            "value": "100"
+            "text": "1",
+            "value": "1"
           }
         ],
-        "query": "100",
+        "query": "1",
         "skipUrlSync": false,
         "type": "textbox"
       },
       {
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "1",
           "value": "1"
         },
@@ -402,12 +404,12 @@
     ]
   },
   "time": {
-    "from": "2023-07-26T02:56:27.434Z",
-    "to": "2023-07-26T22:17:32.220Z"
+    "from": "2023-07-29T03:35:22.891Z",
+    "to": "2023-07-29T08:23:59.999Z"
   },
   "timepicker": {},
   "timezone": "utc",
   "title": "k5m(1d)",
   "uid": "NN19k5m1d",
-  "version": 21
+  "version": 25
 }
